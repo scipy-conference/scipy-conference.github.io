@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:og="http://ogp.me/ns#"
+      xmlns:fb="https://www.facebook.com/2008/fbml">
+<head>
+    <title>Multidimensional Data Exploration with Glue</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="./theme/css/font-awesome.min.css" rel="stylesheet">
+    <link href="./theme/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="./theme/css/pygments.css" rel="stylesheet">
+    <link rel="stylesheet" href="./theme/css/style.css" type="text/css"/>
+    <!-- JavaScript plugins (requires jQuery) -->
+    <script src="http://code.jquery.com/jquery.js"></script>
+
+
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="." class="navbar-brand">OpenProceedings</a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+<!--
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="./archives.html"><i class="icon-th-list"></i>Archives</a></li>
+            </ul>
+--!>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</nav>
+<!-- /.navbar -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="./multidimensional-data-exploration-with-glue.html"
+                       rel="bookmark"
+                       title="Permalink to Multidimensional Data Exploration with Glue">
+                        Multidimensional Data Exploration with Glue
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">By</span>
+    <i class="icon-user"></i>Christopher Beaumont, Thomas Robitaille, Alyssa Goodman, Michelle Borkin
+
+
+        <span class="label label-default">
+            <a href="./pdf/multidimensional-data-exploration-with-glue.pdf">PDF</a>
+        </span>
+
+        &nbsp;
+        <span class="label label-default">
+            <a href="./bib/multidimensional-data-exploration-with-glue.bib">BibTex</a>
+        </span>
+
+
+&nbsp;
+<span class="label label-default">Tags</span>
+	<a href="./tag/data-visualization.html">data visualization</a>
+        /
+	<a href="./tag/exploratory-data-analysis.html">exploratory data analysis</a>
+        /
+	<a href="./tag/python.html">Python</a>
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <div class="section" id="introduction">
+<h2>Introduction</h2>
+<p>The world is awash in increasingly accessible and increasingly
+interrelated data.  Modern researchers rarely consider data in
+isolation.  In astronomy, for example, researchers often complement
+newly-collected data with publicly-available survey data targeting a
+different range of the electromagnetic spectrum.  Because of this, new
+discoveries are increasingly dependent upon interpreting data in the
+context of other data.</p>
+<p>Unfortunately, most of the current interactive tools for data
+exploration focus on analyzing a single dataset at a time. It is
+considerably more difficult to explore several conceptually related
+datasets at once. Scientists typically resort to non-interactive
+techniques (e.g., writing scripts to produce static
+visualizations). This slows the pace of investigation, and makes it
+difficult to uncover subtle relationships between datasets.</p>
+<p>To address this shortcoming, we have been developing Glue. Glue is an
+interactive data visualization environment that focuses on
+multi-dataset exploration. Glue allows users to specify how different
+datasets are related, and uses this information to dynamically link
+and overlay visualizations of several datasets. Glue also
+integrates into Python-based analysis workflows, and eases the back-and-forth
+between interactive and non-interactive data analysis.</p>
+</div>
+<div class="section" id="the-basic-glue-workflow">
+<h2>The Basic Glue Workflow</h2>
+<p>The central visualization philosophy behind Glue is the idea of
+linked views -- that is, multiple related representations
+of a dataset that are dynamically connected, such that interaction
+with one view affects the appearance of another. For example,
+a user might create two different scatter plots of a multi-dimensional
+table, select a particular region of parameter space in one plot,
+and see the points in that region highlighted in both plots. Linked-view
+visualizations are especially effective at exploring high-dimensional
+data. Glue extends this idea to related data sets spread across multiple files.</p>
+<p>Let's illustrate the basic Glue workflow with an example. An
+astronomer is studying Infrared Dark Clouds (environments of star
+formation) in our Galaxy. Her data sets include a catalog of known
+Infrared Dark Clouds, a second catalog of &quot;cores&quot;
+(substructures embedded in these clouds where the stars actually
+form), and a wide-field infrared survey image of a particular cloud.</p>
+<p><strong>Step 1</strong> She begins by loading the cloud catalog into Glue. She creates a
+scatter plot of the position of each cloud, as well as a histogram
+showing the distribution of surface densities. She creates each
+visualization by dragging the data item onto the visualization
+area. At this point, her screen looks like Figure 1.</p>
+<div class="thb figure">
+<img alt="" src="images/glueviz_step_1.png" style="width: 246.84px; height: 294.1px;" />
+<p class="caption">The basic Glue interface, shown at the end of <strong>step 1</strong>. Datasets
+are listed on the left panel.  Dragging them to the right creates a
+new visualization.</p>
+</div>
+<p><strong>Step 2</strong> She is interested in a particular region of the sky, and thus draws
+a lasso around particular points in the scatter plot. This creates
+a new &quot;subset&quot;, which is shown in red on each visualization (Figure 2). If she
+traces a different region on either plot, the subset will update
+in both views automatically.</p>
+<div class="thb figure">
+<img alt="" src="images/glueviz_step_2.png" style="width: 246.5px; height: 289.68px;" />
+<p class="caption">Glue after <strong>step 2</strong>. Tracing a cluster of points in the scatter
+plot creates a new subset, The histogram plot updates
+automatically.</p>
+</div>
+<p><strong>Step 3</strong> Next she loads the infrared image. She would like to see how the
+points in the catalog relate to structures in the image, by
+overplotting the subset on the image. To do this, she first &quot;links&quot;
+the data by defining the logical relationships between the two
+files. She opens a data linking dialog, which displays the attributes
+defined for each dataset (Figure 3). The image has attributes for the x and y
+location of each pixel, and the catalog has columns which list the
+location of each object in the same coordinate system. She highlights
+the attribute describing the x location attribute for each dataset
+(Right Ascension), and &quot;links&quot; them (in effect informing Glue that the
+two attributes describe the same quantity). She repeats this for the y
+location attribute (declination), and closes the dialog.</p>
+<div class="thb figure">
+<img alt="" src="images/glueviz_step_3.png" style="width: 239.8px; height: 187.55px;" />
+<p class="caption">The dialog for expression relationships between different
+datasets in <strong>step 3</strong>. Here, both datasets use the same spatial
+coordinates.</p>
+</div>
+<p><strong>Step 4</strong> Now, she can drag the subset onto the image, to overplot
+these points at their proper location (this is possible because
+Glue now has enough information to compute the location of each
+catalog source in the image. The details of how this is accomplished
+are described in the next section). All three plots are still linked:
+if the user highlights a new region in the image, this will
+redefine the subset and update each plot. Figure 4 shows the
+Glue interface at this point.</p>
+<div class="wthb figure align-center">
+<img alt="" src="images/glueviz_step_4.png" style="width: 509.96px; height: 332.12px;" />
+<p class="caption">Once the catalog and image are linked, the user can overplot
+the original subset on the image (<strong>step 4</strong>).</p>
+</div>
+<p>The relationship between the catalog and image was very simple; each
+dataset described the <em>same spatial quantities</em>, in the <em>same
+units</em>. In general, connections between datasets are more
+complicated. For example, the catalog of cores specifies positions in
+a different coordinate system. Because of this, Glue allows users to
+connect quantities across datasets using transformation
+functions. Glue includes some of these functions by default, but users
+can also write their own functions for arbitrary transformations. Glue
+uses these functions as needed to transform quantities between
+coordinate systems, to correctly overlay visualizations and/or filter
+data in subsets.</p>
+<p><strong>Step 5</strong> Our scientist discovers several interesting relationships between
+these datasets -- in particular, that several distinct entries in the
+cloud catalog appear to form a coherent, extended structure in the
+image. Furthermore, the cores embedded in these clouds all have
+similar velocities, strengthening the argument that they are related.
+At this point, she decides to test this hypothesis more rigorously, by
+comparing to models of structure formation. This analysis will happen
+outside of Glue. She saves all of her subsets as masks, for followup
+analysis. Furthermore, she saves the entire Glue session, which allows
+her to re-load these datasets, dataset connections, and subset
+definitions at any time.</p>
+<div class="thb figure">
+<img alt="" src="images/glueviz_step_5.png" style="width: 178.2px; height: 234.3px;" />
+<p class="caption">Eventually, the user annotates several
+interesting regions in parameter space (<strong>step 5</strong>). These subsets
+can be exported as masks for further analysis.</p>
+</div>
+</div>
+<div class="section" id="glue-architecture">
+<h2>Glue Architecture</h2>
+<p>The scenario above outlines the basic workflow that Glue enables --
+Glue allows users to create interactive linked visualizations, and
+to drill down into interesting subsets of these visualizations. One of
+the design priorities in Glue is to keep visualization code as simple
+and modular as possible, so that adding new visualizations is
+straightforward. Here we provide an overview of how we have implemented
+cross-data linking in Glue, while striving to keep
+visualization code as simple as possible.</p>
+<p>Keeping visualizations in-sync is accomplished with the
+publish/subscribe pattern. Glue defines several standard messages that
+communicate state changes (e.g., that a subset definition has been
+changed, a subset has been added or removed, etc.).  Visualization
+clients attach callback methods to a central hub; these callback
+methods are meant to respond to a particular type of state change
+(e.g., to change the appearance of a plot). The hub is responsible for
+broadcasting messages it receives -- in effect, calling each callback
+function registered with a particular message. Thus, to stay
+synchronized, a visualization client simply needs to implement
+callback functions that handle each type of message, and register
+these with the hub.</p>
+<p>The hub receives messages to broadcast from data and subset
+objects. The base classes for these objects override the
+<tt class="docutils literal">__setattribute__</tt> method, such that state changes automatically
+send messages to the hub. This means that, in most situations, code
+that edits the state (for example, code that translates user-drawn
+regions-of-interest to subset definitions) need not manually
+broadcast messages.</p>
+<p>Glue enables data linking across files by providing a simple,
+dictionary-like interface for accessing attributes from data.  For
+example, consider the case where a user overplots a
+catalog on top of an image.  Such an overlay requires knowledge of the
+location of each catalog entry <em>in the pixel coordinate system of the
+image</em>. The pseudo-code for the overlay looks like this:</p>
+<pre class="code python literal-block">
+<span class="pygments-k">def</span> <span class="pygments-nf">overplot_catalog</span><span class="pygments-p">(</span><span class="pygments-n">catalog_data</span><span class="pygments-p">):</span>
+    <span class="pygments-k">try</span><span class="pygments-p">:</span>
+        <span class="pygments-c"># try to fetch requested quantities</span>
+        <span class="pygments-n">x</span> <span class="pygments-o">=</span> <span class="pygments-n">catalog_data</span><span class="pygments-p">[</span><span class="pygments-s">'pixel_coord_x'</span><span class="pygments-p">]</span>
+        <span class="pygments-n">y</span> <span class="pygments-o">=</span> <span class="pygments-n">catalog_data</span><span class="pygments-p">[</span><span class="pygments-s">'pixel_coord_y'</span><span class="pygments-p">]</span>
+    <span class="pygments-k">except</span> <span class="pygments-n">InvalidAttribute</span><span class="pygments-p">:</span>
+        <span class="pygments-c"># cannot compute pixel location of catalog</span>
+        <span class="pygments-k">return</span>
+    <span class="pygments-c"># x, y are numpy arrays</span>
+    <span class="pygments-n">plot</span><span class="pygments-p">(</span><span class="pygments-n">x</span><span class="pygments-p">,</span> <span class="pygments-n">y</span><span class="pygments-p">)</span>
+
+</pre>
+<p>In other words, visualization code simply looks up the information it
+needs. Behind the scenes, the data object is responsible for
+retrieving and/or computing this quantity, and returning a NumPy
+array. If it cannot do this, it raises an <tt class="docutils literal">InvalidAttribute</tt>
+exception, which visualization code responds to. Importantly,
+visualization code is <em>not</em> responsible for performing coordinate
+transformations.</p>
+<p>Subsets also rely on this interface for filtering data.
+Each subset stores its logical definition as a subset state.
+Fundamentally, subset states are combinations of inequalities. Each
+subset state has a <tt class="docutils literal">to_mask</tt> method that is capable of filtering
+a given dataset. For example,
+the implementation of a simple inequality subset state looks like this:</p>
+<pre class="code python literal-block">
+<span class="pygments-k">class</span> <span class="pygments-nc">GreaterThanSubsetState</span><span class="pygments-p">(</span><span class="pygments-n">SubsetState</span><span class="pygments-p">):</span>
+
+    <span class="pygments-k">def</span> <span class="pygments-nf">__init__</span><span class="pygments-p">(</span><span class="pygments-bp">self</span><span class="pygments-p">,</span> <span class="pygments-n">attribute</span><span class="pygments-p">,</span> <span class="pygments-n">threshold</span><span class="pygments-p">):</span>
+        <span class="pygments-bp">self</span><span class="pygments-o">.</span><span class="pygments-n">attribute</span> <span class="pygments-o">=</span> <span class="pygments-n">attribute</span>
+        <span class="pygments-bp">self</span><span class="pygments-o">.</span><span class="pygments-n">threshold</span> <span class="pygments-o">=</span> <span class="pygments-n">threshold</span>
+
+    <span class="pygments-k">def</span> <span class="pygments-nf">to_mask</span><span class="pygments-p">(</span><span class="pygments-bp">self</span><span class="pygments-p">,</span> <span class="pygments-n">data</span><span class="pygments-p">):</span>
+        <span class="pygments-c"># uses the data dictionary interface</span>
+        <span class="pygments-k">return</span> <span class="pygments-n">data</span><span class="pygments-p">[</span><span class="pygments-bp">self</span><span class="pygments-o">.</span><span class="pygments-n">attribute</span><span class="pygments-p">]</span> <span class="pygments-o">&gt;</span> <span class="pygments-bp">self</span><span class="pygments-o">.</span><span class="pygments-n">threshold</span>
+
+</pre>
+<p>Because subset states retain the information about which
+quantities they constrain, they can be applied across datasets,
+provided the quantities that they filter against are defined
+or computable in the target dataset.</p>
+<p>Internally, Glue maintains a graph of coordinate transformation
+functions when the user defines connections between datasets. The
+nodes in this graph are all the attributes defined in all datasets,
+and the edges are translation functions. When client code
+tries to access a quantity that is not originally stored
+in a dataset, Glue searches for a path from quantities that <em>are</em>
+natively present to the requested quantity. If such a path
+exists, The relevant set of transformation functions are called,
+and the result is returned.</p>
+</div>
+<div class="section" id="integrating-with-python-workflows">
+<h2>Integrating with Python Workflows</h2>
+<p>Python is the language-of-choice for many scientists, and the
+fact that Glue is written in Python means that it is more easily
+&quot;hackable&quot; than a typical GUI application. This blurs the boundary
+between interactive and scripted analysis, and can lead to a more fluid
+workflow. Here are several examples:</p>
+<p><strong>Custom data linking functions</strong> Glue allows users to specify
+arbitrary Python functions to translate between quantities in
+different datasets.  As a simple example, consider a function which
+translates between pounds and kilograms:</p>
+<pre class="code python literal-block">
+<span class="pygments-kn">from</span> <span class="pygments-nn">glue.config</span> <span class="pygments-kn">import</span> <span class="pygments-n">link_function</span>
+
+<span class="pygments-nd">&#64;link_function</span><span class="pygments-p">(</span><span class="pygments-n">info</span><span class="pygments-o">=</span><span class="pygments-s">'Convert pounds to kilograms'</span><span class="pygments-p">)</span>
+<span class="pygments-k">def</span> <span class="pygments-nf">pounds2kilos</span><span class="pygments-p">(</span><span class="pygments-n">lbs</span><span class="pygments-p">):</span>
+    <span class="pygments-k">return</span> <span class="pygments-n">lbs</span> <span class="pygments-o">/</span> <span class="pygments-mf">2.2</span>
+
+</pre>
+<p>Link functions accept and return NumPy arrays. The <tt class="docutils literal">link_function</tt>
+decorator adds this function to the list of translation functions
+presented in the data linking UI. This code can be put in a
+configuration file that glue runs on startup.</p>
+<p><strong>Custom data loading</strong> A traditional weakness of GUIs is their
+fragility to unanticipated data formats. However, Glue allows users to
+specify custom data loader methods, to parse data in unrecognized
+formats. For example, to parse jpeg files:</p>
+<pre class="code python literal-block">
+<span class="pygments-kn">from</span> <span class="pygments-nn">glue.config</span> <span class="pygments-kn">import</span> <span class="pygments-n">data_factory</span>
+<span class="pygments-kn">from</span> <span class="pygments-nn">glue.core</span> <span class="pygments-kn">import</span> <span class="pygments-n">Data</span>
+<span class="pygments-kn">from</span> <span class="pygments-nn">skimage.io</span> <span class="pygments-kn">import</span> <span class="pygments-n">imread</span>
+
+<span class="pygments-nd">&#64;data_factory</span><span class="pygments-p">(</span><span class="pygments-s">'JPEG Reader'</span><span class="pygments-p">,</span> <span class="pygments-s">'*.jpg'</span><span class="pygments-p">)</span>
+<span class="pygments-k">def</span> <span class="pygments-nf">read_jpeg_image</span><span class="pygments-p">(</span><span class="pygments-n">file_name</span><span class="pygments-p">):</span>
+    <span class="pygments-n">im</span> <span class="pygments-o">=</span> <span class="pygments-n">imread</span><span class="pygments-p">(</span><span class="pygments-n">file_name</span><span class="pygments-p">)</span>
+
+    <span class="pygments-k">return</span> <span class="pygments-n">Data</span><span class="pygments-p">(</span><span class="pygments-n">label</span><span class="pygments-o">=</span><span class="pygments-s">'Image'</span><span class="pygments-p">,</span>
+                <span class="pygments-n">r</span><span class="pygments-o">=</span><span class="pygments-n">im</span><span class="pygments-p">[:,</span> <span class="pygments-p">:,</span> <span class="pygments-mi">0</span><span class="pygments-p">],</span>
+                <span class="pygments-n">g</span><span class="pygments-o">=</span><span class="pygments-n">im</span><span class="pygments-p">[:,</span> <span class="pygments-p">:,</span> <span class="pygments-mi">1</span><span class="pygments-p">],</span>
+                <span class="pygments-n">b</span><span class="pygments-o">=</span><span class="pygments-n">im</span><span class="pygments-p">[:,</span> <span class="pygments-p">:,</span> <span class="pygments-mi">2</span><span class="pygments-p">])</span>
+
+</pre>
+<p>This function parses a data object with three attributes (the red,
+green, and blue channels). The <tt class="docutils literal">data_factory</tt> decorator adds
+this function to the data loading user interface.</p>
+<p><strong>Setup Scripts</strong> Glue can be passed a Python script to run on
+startup. This can be a convenient way to automate the task of loading
+and linking several files that are frequently visualized. This
+addresses another typical pain-point of GUIs -- the repetitive
+mouse-clicking one has to do every time a GUI is restarted.</p>
+<p><strong>Calling Glue from Python</strong> Glue can be invoked during a running
+Python session. Many scientists use Python for data-exploration from
+the command line (or, more recently, the IPython notebook). Glue can
+be used to interact with live Python variables. For example, Glue
+includes a convenience function, <tt class="docutils literal">qglue</tt>, that composes &quot;normal&quot;
+data objects like NumPy arrays and Pandas DataFrames into Glue
+objects, and initializes the Glue UI with these variables. <tt class="docutils literal">qglue</tt>
+is useful for quick questions about multidimensional data that arise
+mid-analysis.</p>
+<p>Similarly, Glue embeds an IPython terminal that gives users access
+to the Python command line (and Glue variables) during a glue
+session. Variables in a Glue session can be introspected and
+analyzed on this command line.</p>
+</div>
+<div class="section" id="relationship-to-other-efforts">
+<h2>Relationship to Other Efforts</h2>
+<p>Glue helps researchers uncover the relationships that exist between
+related datasets. It enables users to easily create multiple linked
+visualizations which can be used to identify and drill down into
+interesting data subsets.</p>
+<p>Many of the ideas behind Glue are rooted in previous efforts (for a
+more thorough history from an astronomy perspective, see
+<a class="citation-reference" href="#goodman12" id="id1">[Goodman12]</a>). The statistician John Tukey pioneered many of the
+ideas behind what he termed Exploratory Data Analysis (that is, the
+open-ended investigation of features in datasets, as distinguished
+from Confirmatory Data Analysis where specific hypotheses are tested
+systematically; <a class="citation-reference" href="#tukey77" id="id2">[Tukey77]</a>). In the early 1970s, he developed the
+PRIM-9 program, which implemented the idea of creating multiple views
+of multivariate data, and isolating data subsets. More modern
+linked-visualization programs influenced by PRIM-9 include <a class="reference external" href="http://ggobi.org/">GGobi</a>, <a class="reference external" href="http://spotfire.tibco.com">Spotfire</a>,
+<a class="reference external" href="http://www.datadesk.com">DataDesk</a>, and <a class="reference external" href="http://www.tableausoftware.com">Tableau</a> (the first is free and open-source,
+the latter 3 are commercial).</p>
+<p>Within the astronomy community, <a class="reference external" href="http://www.star.bris.ac.uk/~mbt/topcat/">Topcat</a> and <a class="reference external" href="https://www.assembla.com/wiki/show/viewpoints">Viewpoints</a> focus on linked
+visualization of tabular data. Finally, some efforts from the
+Virtual Observatory community (especially the <a class="reference external" href="http://www.ivoa.net/documents/SAMP/">SAMP</a> protocol) allow different
+visualization tools to interoperate, and hence provide a limited
+linked-view environment.</p>
+<p>Glue builds upon the ideas developed in these programs in a few key
+ways. The majority of these linked-view environments focus on the
+exploration of a single catalog. Glue generalizes this approach in two
+directions. First, Glue is designed to handle several files at a time,
+and to visually explore the connections between these files.  Second, Glue
+handles non-tabular data like images -- this is critical for
+applications in astronomy, medical imaging, and Geographic Information
+Systems.</p>
+<p>The landscape of data is evolving rapidly, and driving revolutions
+both within and beyond science. The phenomenon of &quot;big data&quot; is one of
+the most public facets of this revolution. Rapidly growing volumes of
+data present new engineering challenges for analysis, as well as new
+opportunities for data-driven decision making. Glue tackles a
+different but equally important facet of the data revolution, which we
+call &quot;wide data&quot;. Data are becoming increasingly inter-related, and
+the ability to tease out these connections will enable new
+discoveries. Glue is a platform for visually and flexibly exploring these
+relationships.</p>
+</div>
+<div class="section" id="references">
+<h2>References</h2>
+<table class="docutils citation" frame="void" id="goodman12" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[Goodman12]</a></td><td>Goodman, Alyssa
+<em>Principles of high-dimensional data visualization in astronomy</em>
+Astronomische Nachrichten, Vol. 333, Issue 5-6, p.505</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="tukey77" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[Tukey77]</a></td><td>Tukey, John
+<em>Exploratory Data Analysis</em>
+Addison-Wesley Publishing Company, 1977</td></tr>
+</tbody>
+</table>
+</div>
+
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+        <div class="col-lg-3 well well-sm" id="sidebar">
+<aside>
+    <section>
+        <ul class="list-group list-group-flush">
+
+
+
+            <li class="list-group-item"><a href="./tags.html"><h4><i class="icon-tags icon-large"></i>Tags</h4></a></li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/dmtcp.html">
+                        DMTCP
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/data-visualization.html">
+                        data visualization
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/ipython.html">
+                        IPython
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/python.html">
+                        Python
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/exploratory-data-analysis.html">
+                        exploratory data analysis
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/reversible-debugger.html">
+                        reversible debugger
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/cython.html">
+                        Cython
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/checkpoint-restart.html">
+                        checkpoint-restart
+                    </a>
+                </li>
+        </ul>
+    </section>
+</aside>        </div>
+    </div>
+</div>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="./theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="./theme/js/respond.min.js"></script>
+</body>
+</html>

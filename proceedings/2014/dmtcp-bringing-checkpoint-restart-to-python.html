@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:og="http://ogp.me/ns#"
+      xmlns:fb="https://www.facebook.com/2008/fbml">
+<head>
+    <title>DMTCP: Bringing Checkpoint-Restart to Python</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="./theme/css/font-awesome.min.css" rel="stylesheet">
+    <link href="./theme/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="./theme/css/pygments.css" rel="stylesheet">
+    <link rel="stylesheet" href="./theme/css/style.css" type="text/css"/>
+    <!-- JavaScript plugins (requires jQuery) -->
+    <script src="http://code.jquery.com/jquery.js"></script>
+
+
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="." class="navbar-brand">OpenProceedings</a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+<!--
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="./archives.html"><i class="icon-th-list"></i>Archives</a></li>
+            </ul>
+--!>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</nav>
+<!-- /.navbar -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="./dmtcp-bringing-checkpoint-restart-to-python.html"
+                       rel="bookmark"
+                       title="Permalink to DMTCP: Bringing Checkpoint-Restart to Python">
+                        DMTCP: Bringing Checkpoint-Restart to Python
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">By</span>
+    <i class="icon-user"></i>Kapil Arya, Gene Cooperman
+
+
+        <span class="label label-default">
+            <a href="./pdf/dmtcp-bringing-checkpoint-restart-to-python.pdf">PDF</a>
+        </span>
+
+        &nbsp;
+        <span class="label label-default">
+            <a href="./bib/dmtcp-bringing-checkpoint-restart-to-python.bib">BibTex</a>
+        </span>
+
+
+&nbsp;
+<span class="label label-default">Tags</span>
+	<a href="./tag/checkpoint-restart.html">checkpoint-restart</a>
+        /
+	<a href="./tag/dmtcp.html">DMTCP</a>
+        /
+	<a href="./tag/ipython.html">IPython</a>
+        /
+	<a href="./tag/cython.html">Cython</a>
+        /
+	<a href="./tag/reversible-debugger.html">reversible debugger</a>
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <div class="section" id="introduction">
+<h2>Introduction</h2>
+<p>DMTCP (Distributed MultiThreaded CheckPointing) <a class="citation-reference" href="#ansel09" id="id1">[Ansel09]</a> is a mature
+user-space checkpoint-restart package.  One can
+view checkpoint-restart as a generalization of pickling.  Instead of
+saving an object to a file, one saves the entire Python session to a
+file.  Checkpointing graphics in Python is also supported by
+checkpointing a virtual network client (VNC) session with Python running
+inside that session.</p>
+<p>DMTCP is available as a Linux package for many popular Linux distributions.
+DMTCP can checkpoint Python or IPython from the <em>outside</em>, i.e. by treating
+Python as a black box. To enable checkpointing, the Python interpreter
+is launched in the following manner:</p>
+<pre class="code sh literal-block">
+<span class="pygments-nv">$ </span>dmtcp_checkpoint python &lt;args&gt;
+<span class="pygments-nv">$ </span>dmtcp_command --checkpoint
+
+</pre>
+<p>The command <tt class="docutils literal">dmtcp_command</tt> can be used at any point to create a
+checkpoint of the entire session.</p>
+<p>However, most Python programmers will prefer to request a checkpoint
+interactively within a Python session, or else programmatically from
+inside a Python or Cython program.</p>
+<p>DMTCP is made accessible to Python programmers as a Python module.  Hence, a
+checkpoint is executed as <tt class="docutils literal">import dmtcp; dmtcp.checkpoint()</tt>.  This Python
+module provides this and other functions to support the features of DMTCP.
+The module for DMTCP functions equally well in IPython.</p>
+<p>This DMTCP module implements a generalization of a saveWorkspace function,
+which additionally supports graphics and the distributed processes of
+IPython.  In addition, three novel uses of DMTCP for helping
+debug Python are discussed.</p>
+<ol class="arabic simple">
+<li>Fast/Slow Computation : Cython provides both traditional
+interpreted functions and compiled C functions.  Interpreted
+functions are slow, but correct.  Compiled functions are fast,
+but users sometimes declare incorrect C types, causing the
+compiled function silently return a wrong answer.  The idea
+of fast/slow computation is to run the compiled version on
+one computer node, while creating checkpoint images at regular
+intervals.  Separate computer nodes are used to check each interval
+in interpreted mode between checkpoints.</li>
+<li>FReD : a Fast Reversible Debugger that works closely with
+the Python pdb debugger, as well as other Python debuggers.</li>
+<li>Reverse Expression Watchpoint : This is a novel feature
+within the FReD reversible debugger.  Assume a bug occurred in the past.
+It is associated with the point in time when a certain
+expression changed.  Bring the user back to a pdb session
+at the step before the bug occurred.</li>
+</ol>
+<p>The remaining sections describe: the
+<a class="reference internal" href="#dmtcp-python-integration-through-a-python-module">DMTCP-Python Integration through a Python Module</a>; and several
+extensions of the integration of DMTCP with Python.  The extensions
+include support for <a class="reference internal" href="#checkpointing-python-based-graphics">Checkpointing Python-Based Graphics</a>;
+<a class="reference internal" href="#checking-cython-with-multiple-cpython-instances">Checking Cython with Multiple CPython Instances</a> (fast/slow technique); and
+<a class="reference internal" href="#reversible-debugging-with-fred">Reversible Debugging with FReD</a>. More information about DMTCP is added in
+<a class="reference internal" href="#appendix-background-of-dmtcp">Appendix: Background of DMTCP</a>.</p>
+</div>
+<div class="section" id="dmtcp-python-integration-through-a-python-module">
+<h2>DMTCP-Python Integration through a Python Module</h2>
+<p>A Python module, <tt class="docutils literal">dmtcp.py</tt>, has been created to support checkpointing
+both from within an interactive Python/IPython session and programmatically
+from within a Python or Cython program.
+DMTCP has been able to asynchronously generate checkpoints of a Python
+session for many years.  However, most users prefer the more fine-grained
+control of a Python programmatic interface to DMTCP.  This allows one
+to avoid checkpointing in the middle of a communication with an external
+server or other atomic transaction.</p>
+<div class="section" id="a-python-module-to-support-dmtcp">
+<h3>A Python Module to Support DMTCP</h3>
+<p>Some of the features of <tt class="docutils literal">module.py</tt> are best illustrated through an example.
+Here, a checkpoint request is made from within the application.</p>
+<pre class="code python literal-block">
+<span class="pygments-o">...</span>
+<span class="pygments-kn">import</span> <span class="pygments-nn">dmtcp</span>
+<span class="pygments-o">...</span>
+<span class="pygments-c"># Request a checkpoint if running under checkpoint</span>
+<span class="pygments-c"># control</span>
+<span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">checkpoint</span><span class="pygments-p">()</span>
+<span class="pygments-c"># Checkpoint image has been created</span>
+<span class="pygments-o">...</span>
+
+</pre>
+<p>It is also easy to add pre- and post-checkpoint processing actions.</p>
+<pre class="code python literal-block">
+<span class="pygments-o">...</span>
+<span class="pygments-kn">import</span> <span class="pygments-nn">dmtcp</span>
+<span class="pygments-o">...</span>
+<span class="pygments-k">def</span> <span class="pygments-nf">my_ckpt</span><span class="pygments-p">(</span><span class="pygments-o">&lt;</span><span class="pygments-n">args</span><span class="pygments-o">&gt;</span><span class="pygments-p">):</span>
+
+    <span class="pygments-c"># Pre processing</span>
+    <span class="pygments-n">my_pre_ckpt_hook</span><span class="pygments-p">(</span><span class="pygments-o">&lt;</span><span class="pygments-n">args</span><span class="pygments-o">&gt;</span><span class="pygments-p">)</span>
+    <span class="pygments-o">...</span>
+    <span class="pygments-c"># Create checkpoint</span>
+    <span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">checkpoint</span><span class="pygments-p">()</span>
+    <span class="pygments-c"># Checkpoint image has been created</span>
+    <span class="pygments-o">...</span>
+    <span class="pygments-k">if</span> <span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">isResume</span><span class="pygments-p">():</span>
+        <span class="pygments-c"># The process is resuming from a checkpoint</span>
+        <span class="pygments-n">my_resume_hook</span><span class="pygments-p">(</span><span class="pygments-o">&lt;</span><span class="pygments-n">args</span><span class="pygments-o">&gt;</span><span class="pygments-p">)</span>
+        <span class="pygments-o">...</span>
+    <span class="pygments-k">else</span><span class="pygments-p">:</span>
+        <span class="pygments-c"># The process is restarting from a previous</span>
+        <span class="pygments-c"># checkpoint</span>
+        <span class="pygments-n">my_restart_hook</span><span class="pygments-p">(</span><span class="pygments-o">&lt;</span><span class="pygments-n">args</span><span class="pygments-o">&gt;</span><span class="pygments-p">)</span>
+        <span class="pygments-o">...</span>
+
+    <span class="pygments-k">return</span>
+<span class="pygments-o">...</span>
+
+</pre>
+<p>The function <code>my_ckpt</code> can be defined in the application by the
+user and can be called from within the user application at any point.</p>
+</div>
+<div class="section" id="extending-the-dmtcp-module-for-managing-sessions">
+<h3>Extending the DMTCP Module for Managing Sessions</h3>
+<p>These core checkpoint-restart services are further extended to
+provide the user with the concept of multiple sessions. A checkpointed
+Python session is given a unique session id to distinguish it from other
+sessions.  When running interactively, the user can view the list of
+available checkpointed sessions.  The current session can be replaced by
+any of the existing session using the session identifier.</p>
+<p>The application can programmatically revert to an earlier session as
+shown in the following example:</p>
+<pre class="code python literal-block">
+<span class="pygments-o">...</span>
+<span class="pygments-kn">import</span> <span class="pygments-nn">dmtcp</span>
+<span class="pygments-o">...</span>
+<span class="pygments-n">sessionId1</span> <span class="pygments-o">=</span> <span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">checkpoint</span><span class="pygments-p">()</span>
+<span class="pygments-o">...</span>
+<span class="pygments-n">sessionId2</span> <span class="pygments-o">=</span> <span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">checkpoint</span><span class="pygments-p">()</span>
+<span class="pygments-o">...</span>
+
+<span class="pygments-o">...</span>
+<span class="pygments-k">if</span> <span class="pygments-o">&lt;</span><span class="pygments-n">condition</span><span class="pygments-o">&gt;</span><span class="pygments-p">:</span>
+    <span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">restore</span><span class="pygments-p">(</span><span class="pygments-n">sessionId2</span><span class="pygments-p">)</span>
+<span class="pygments-k">else</span><span class="pygments-p">:</span>
+    <span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">restore</span><span class="pygments-p">(</span><span class="pygments-n">sessionId1</span><span class="pygments-p">)</span>
+
+</pre>
+<!-- Note that only session id is used to restore to a previous session. It
+is also possible to enhance the DMTCP module to pass extra arguments to
+the restore function. Those extra arguments can be made available to the
+:code:`dmtcp.isRestart()` path. The application can thus take a
+different branch now instead of following the same route. -->
+</div>
+<div class="section" id="save-restore-for-ipython-sessions">
+<h3>Save-Restore for IPython Sessions</h3>
+<p>To checkpoint an IPython session, one must consider the configuration
+files. The configuration files are typically stored in user's home
+directory. During restart, if the configuration files are missing, the
+restarted computation may fail to continue.  Thus, DMTCP must checkpoint
+and restore all the files required for proper restoration
+of an IPython session.</p>
+<p>Attempting to restore all configuration files during restart poses yet
+another problem: the existing configuration files might have newer
+contents. Overwriting these newer files with copies from the checkpoint time
+may result in the loss of important changes.</p>
+<p>To avoid overwriting the existing configuration files, the files related
+to IPython session are restored in a
+temporary directory.  Whenever IPython shell attempts to open a file in
+the original configuration directory, the filepath is updated to point to
+the temporary directory. Thus, the files in the original configuration
+directory are never modified.
+Further, the translation from original to temporary path is transparent
+to the IPython shell.</p>
+</div>
+<div class="section" id="save-restore-for-parallel-ipython-sessions">
+<h3>Save-Restore for Parallel IPython Sessions</h3>
+<p>DMTCP is capable of checkpointing a distributed computations with
+processes running on multiple nodes. It automatically checkpoints and
+restores various kinds of inter-process communication mechanisms such as
+shared-memory, message queues, pseudo-ttys, pipes and network sockets.</p>
+<p>An IPython session involving a distributed computation running on a
+cluster is checkpointed as a single unit. DMTCP allows restarting the
+distributed processes in a different configuration than the original.
+For example, all the processes can be restarted on a single computer for
+debugging purposes.
+In another example, the computation may be restarted on a
+different cluster altogether.</p>
+</div>
+</div>
+<div class="section" id="checkpointing-python-based-graphics">
+<h2>Checkpointing Python-Based Graphics</h2>
+<p>Python is popular for scientific visualizations. It is possible to
+checkpoint a Python session with active graphics windows by using VNC.
+DMTCP supports checkpoint-restart of VNC server. In this case, a VNC
+server can be started automatically. The process environment is modified
+to allow the Python interpreter to communicate with the VNC server
+instead of the X-window server. For visualization, a VNC client can be
+fired automatically to display the graphical window.  During checkpoint,
+the VNC server is checkpointed as part of the computation, while the VNC
+client is not. During restart, the Python session and the VNC server are
+restored from their checkpoint images, and a fresh VNC client is
+launched. This VNC client communicates with the restored server and
+displays the graphics to the end user.</p>
+<pre class="code python literal-block">
+<span class="pygments-o">...</span>
+<span class="pygments-kn">import</span> <span class="pygments-nn">dmtcp</span>
+<span class="pygments-o">...</span>
+<span class="pygments-c"># Start VNC server</span>
+<span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">startGraphics</span><span class="pygments-p">()</span>
+
+<span class="pygments-o">...</span>
+
+<span class="pygments-c"># Start VNC viewer</span>
+<span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">showGraphics</span><span class="pygments-p">()</span>
+
+<span class="pygments-c"># generate graphics (will be shown in the VNC viewer)</span>
+<span class="pygments-o">...</span>
+
+</pre>
+<p>To understand the algorithm behind the code, we recall some VNC
+concepts. X-window supports multiple virtual screens. A VNC server
+creates a new virtual screen. The graphics contained in the VNC server
+is independent of any X-window screen. The VNC server process persists
+as a daemon. A VNC viewer displays a specified virtual screen in a
+window in a console.  When python generates graphics, the graphics is
+sent to a virtual screen specified by the environment variable
+<code>$DISPLAY</code>.</p>
+<p>The command <code>dmtcp.startGraphics()</code> creates a new X-window screen
+by creating a new VNC server and sets the <code>$DISPLAY</code> environment
+variable to the new virtual screen.  All python graphics are now sent to
+this new virtual screen.  The additional screen is invisible to the
+python user until the python command <code>dmtcp.showGraphics()</code> is
+given. The Python Command <code>dmtcp.showGraphics()</code> operates by
+invoking a VNC viewer.</p>
+<p>At the time of checkpoint, the VNC server process is checkpointed along
+with the python interpretor while the VNC viewer is not checkpointed.</p>
+<p>On restart, the VNC server detects the stale connection to the old VNC
+viewers. The VNC server perceives this as the VNC viewer process that
+has now died. The DMTCP module then launches anew VNC viewer to connect
+to the VNC server.</p>
+</div>
+<div class="section" id="checking-cython-with-multiple-cpython-instances">
+<h2>Checking Cython with Multiple CPython Instances</h2>
+<p>A common problem for compiled versions of Python such as
+Cython <a class="citation-reference" href="#behnel10" id="id2">[Behnel10]</a> is how to check
+whether the compiled computation is faithful to the interpreted
+computation.  Compilation errors can occur if the compiled code
+assumes a particular C type, and the computation violates that
+assumption for a particular input.  Thus, one has to choose
+between speed of computation and a guarantee that that the
+compiled computation is faithful to the interpreted computation.</p>
+<p>A typical scenario might be a case in which the
+compiled Cython version ran for hours and produced an unexpected
+answer.  One wishes to also check the answer in a matter of hours,
+but pure Python (CPython) would take much longer.</p>
+<p>Informally, the solution is known as a <em>fast/slow</em> technique.
+There is one <em>fast</em> process (Cython), whose correctness is checked by multiple
+<em>slow</em> processes (CPython).
+The core idea is to run the compiled code, while creating checkpoint
+images at regular intervals.  A compiled computation interval is checked
+by copying the two corresponding checkpoints (at the beginning and end of
+the interval) to a separate computer node for checking.  The computation
+is restarted from the first checkpoint image, on the checking node.
+But when the computation is first restarted, the variables for all
+user Python functions are set to the interpreted function object.
+The interval of computation is then re-executed in interpreted mode
+until the end of the computation interval.  The results at the end of
+that interval can then be compared to the results at the end of the same
+interval in compiled mode.</p>
+<p>Figure 1 illustrates the above idea.
+A similar idea has been used by <a class="citation-reference" href="#ghoshal11" id="id3">[Ghoshal11]</a> for distributed speculative
+parallelization.</p>
+<div class="figure">
+<img alt="" src="images/dmtcp_fast-slow.png" />
+<p class="caption">Figure 1: Fast Cython with Slow CPython &quot;checking&quot; nodes.</p>
+</div>
+<p>Note that in order to compare the results at the end of a
+computation interval, it is important that the interpreted version
+on the checker node stop exactly at the end of the interval, in order
+to compare with the results from the checkpoint at the end of the same
+interval.  The simplest way to do this is to add a counter to a
+frequently called function of the end-user code.  The counter is incremented
+each time the function is called.  When the counter reaches a pre-arranged
+multiple (for example, after every million calls), the compiled version
+can generate a checkpoint and write to a file the values of variables
+indicating the state of the computation.  The interpreted version
+writes to a file the values of variables indicating its own state of
+the computation.</p>
+<pre class="code python literal-block">
+<span class="pygments-n">mycounter</span> <span class="pygments-o">=</span> <span class="pygments-mi">0</span>
+<span class="pygments-k">def</span> <span class="pygments-nf">freq_called_user_fnc</span><span class="pygments-p">(</span><span class="pygments-o">&lt;</span><span class="pygments-n">args</span><span class="pygments-o">&gt;</span><span class="pygments-p">):</span>
+    <span class="pygments-k">global</span> <span class="pygments-n">mycounter</span>
+    <span class="pygments-n">mycounter</span> <span class="pygments-o">+=</span> <span class="pygments-mi">1</span>
+    <span class="pygments-k">if</span> <span class="pygments-n">mycounter</span> <span class="pygments-o">%</span> <span class="pygments-mi">1000000</span> <span class="pygments-o">==</span> <span class="pygments-mi">0</span><span class="pygments-p">:</span>
+        <span class="pygments-c"># if running as Cython:</span>
+        <span class="pygments-k">if</span> <span class="pygments-nb">type</span><span class="pygments-p">(</span><span class="pygments-n">freq_called_user_fnc</span><span class="pygments-p">)</span> <span class="pygments-o">==</span> <span class="pygments-nb">type</span><span class="pygments-p">(</span><span class="pygments-nb">range</span><span class="pygments-p">):</span>
+            <span class="pygments-c"># write curr. program state to cython.log</span>
+            <span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">checkpoint</span><span class="pygments-p">()</span>
+            <span class="pygments-k">if</span> <span class="pygments-n">dmtcp</span><span class="pygments-o">.</span><span class="pygments-n">isRestart</span><span class="pygments-p">():</span>
+                <span class="pygments-c"># On restart from ckpt image,</span>
+                <span class="pygments-c">#   switch to pure Python.</span>
+        <span class="pygments-k">else</span><span class="pygments-p">:</span> <span class="pygments-c"># else running as pure Python</span>
+            <span class="pygments-c"># write curr. program state to purePython.log</span>
+            <span class="pygments-n">sys</span><span class="pygments-o">.</span><span class="pygments-n">exit</span><span class="pygments-p">(</span><span class="pygments-mi">0</span><span class="pygments-p">)</span>
+    <span class="pygments-o">...</span>
+    <span class="pygments-c"># original body of freq_called_user_fnc</span>
+    <span class="pygments-k">return</span>
+
+</pre>
+<p>The above code block illustrates the principles.  One compares cython.log and
+purePython.log to determine if the compiled code was faithful to the
+interpreted code.  If the Cython code consists of direct C calls between
+functions, then it will also be necessary to modify the functions of
+the C code generated by Cython, to force them to call the pure Python
+functions on restart after a checkpoint.</p>
+</div>
+<div class="section" id="reversible-debugging-with-fred">
+<h2>Reversible Debugging with FReD</h2>
+<p>While debugging a program, often the programmer over steps and has to
+restart the debugging session. For example, while debugging a program,
+if the programmer steps over (by issue <code>next</code> command inside the
+debugger) a function <code>f()</code> only to determine
+that the bug is in function <code>f()</code> itself, he or she is left with no
+choice but to restart from the beginning.</p>
+<p><em>Reversible debugging</em> is the capability
+to run an application &quot;backwards&quot; in time inside a debugger. If the
+programmer detects that the problem is in function <code>f()</code>, instead
+of restarting from the beginning, the programmer  can issue a <code>reverse-next</code>
+command which takes it to the previous step. He or she  can then issue
+a <code>step</code> command to step into the function in order to find the
+problem.</p>
+<div class="figure">
+<img alt="" src="images/dmtcp_fred-arch-python.png" />
+<p class="caption">Figure 2: Fast Reversible Debugger.</p>
+</div>
+<p>FReD (Fast Reversible Debugger) <a class="citation-reference" href="#arya12" id="id4">[Arya12]</a>, <a class="citation-reference" href="#fred13" id="id5">[FReD13]</a> is a reversible debugger
+based on
+checkpoint-restart. FReD is implemented as a set of Python scripts and
+uses DMTCP to create checkpoints during the
+debugging session. FReD also keeps track of the debugging history. Figure
+2 shows the architecture of FReD.</p>
+<div class="section" id="a-simple-undo-command">
+<h3>A Simple UNDO Command</h3>
+<p>The <em>UNDO</em> command reverses the effect of a previous debugger command
+such as <code>next</code>, <code>continue</code> or <code>finish</code>.
+This is the most basic of reversible debugging commands.</p>
+<p>The functionality of the UNDO command for debugging Python is
+trivially implemented.  A checkpoint is taken at the beginning of the debugging
+session and a list of all debugging commands issued since the
+checkpoint are recorded.</p>
+<p>To execute the UNDO command, the debugging session is restarted from the
+checkpoint image, and the debugging commands are automatically
+re-executed from the list excluding the last command.  This takes the
+process back to before the debugger command was issued.</p>
+<p>In longer debugging sessions, checkpoints are taken at frequent
+intervals to reduce the time spent in replaying the debugging history.</p>
+</div>
+<div class="section" id="more-complex-reverse-commands">
+<h3>More complex reverse commands</h3>
+<div class="figure">
+<img alt="" src="images/dmtcp_commands.png" />
+<p class="caption">Figure 3: Reverse Commands.</p>
+</div>
+<p>Figure 3 shows some typical
+debugging commands being executed in forward as well as backward
+direction in time.</p>
+<p>Suppose that the debugging history appears as <code>[next,next]</code>
+i.e. the user issued two <code>next</code> commands. Further, the second next
+command stepped over a function <code>f()</code>.
+Suppose further that FReD takes checkpoints before each of these commands.
+In this situation, the implementation for <code>reverse-next</code> command is trivial:
+one restarts from the
+last checkpoint image. However, if the command issued were
+<code>reverse-step</code>, simply restarting from the previous checkpoint
+would not suffice.</p>
+<p>In this last case, the
+desired behavior is to take the debugger to the last statement of
+the function <code>f()</code>. In such a situation one needs to decompose the
+last command into a series of commands.
+At the end of
+this decomposition, the last command in the history is a <code>step</code>.
+At this point, the
+history may appear as: <code>[next,step,next, ...,next,step]</code>.
+The process is then restarted from the last checkpoint and the
+debugging history is executed excluding the last <code>step</code> command.
+Decomposing a command into a series of commands terminating
+with <code>step</code> is non-trivial, and an algorithm for that decomposition
+is presented in <a class="citation-reference" href="#visan11" id="id6">[Visan11]</a> .</p>
+<div class="section" id="a-typical-debugging-session-in-fred-with-python">
+<h4>A typical debugging session in FReD with Python</h4>
+<pre class="code python literal-block">
+<span class="pygments-err">$</span> <span class="pygments-n">fredapp</span><span class="pygments-o">.</span><span class="pygments-n">py</span> <span class="pygments-n">python</span> <span class="pygments-o">-</span><span class="pygments-n">mpdb</span> <span class="pygments-n">a</span><span class="pygments-o">.</span><span class="pygments-n">py</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">break</span> <span class="pygments-n">main</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-n">run</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-n">fred</span><span class="pygments-o">-</span><span class="pygments-n">checkpoint</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">break</span> <span class="pygments-mi">6</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">continue</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-n">fred</span><span class="pygments-o">-</span><span class="pygments-n">history</span>
+  <span class="pygments-p">[</span><span class="pygments-k">break</span> <span class="pygments-mi">6</span><span class="pygments-p">,</span> <span class="pygments-k">continue</span><span class="pygments-p">]</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-n">fred</span><span class="pygments-o">-</span><span class="pygments-n">reverse</span><span class="pygments-o">-</span><span class="pygments-nb">next</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-n">fred</span><span class="pygments-o">-</span><span class="pygments-n">history</span>
+  <span class="pygments-p">[</span><span class="pygments-k">break</span> <span class="pygments-mi">7</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span>
+   <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-n">step</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-nb">next</span><span class="pygments-p">,</span> <span class="pygments-n">where</span><span class="pygments-p">]</span>
+
+</pre>
+</div>
+</div>
+<div class="section" id="reverse-expression-watchpoints">
+<h3>Reverse Expression Watchpoints</h3>
+<p>The <em>reverse expression watchpoint</em> automatically finds the location of
+the fault for a given expression in the history of the program
+execution.  It brings the user directly to a statement (one that is not
+a function call) at which the expression is correct, but executing the
+statement will cause the expression to become incorrect.</p>
+<div class="figure">
+<img alt="" src="images/dmtcp_rw-new.png" />
+<p class="caption">Figure 4: Reverse Expression Watchpoint.</p>
+</div>
+<p>Figure 4 provides a simple example.  Assume that a
+bug occurs whenever a linked list has length longer than one million.
+So an expression <code>linked_list.len() &lt;= 1000000</code> is assumed to be
+true throughout.  Assume that it is too expensive to frequently compute
+the length of the linked list, since this would require <code>O(n^2)</code>
+time in what would otherwise be a <code>O(n)</code> time algorithm.  (A more
+sophisticated example might consider a bug in an otherwise
+duplicate-free linked list or an otherwise cycle-free graph.  But the
+current example is chosen for ease of illustrating the ideas.)</p>
+<p>If the length of the linked list is less than or equal to one million,
+we will call the expression &quot;good&quot;.  If the length of the linked list is greater
+than one million, we will call the expression &quot;bad&quot;.  A &quot;bug&quot; is defined as a
+transition from &quot;good&quot; to &quot;bad&quot;.  There may be more than one such
+transition or bug over the process lifetime.  Our goal is simply to find
+any one occurrence of the bug.</p>
+<p>The core of a reverse expression watchpoint is a binary search.  In
+Figure 4, assume a checkpoint was taken near the
+beginning of the time interval.  So, we can revert to any point in the
+illustrated time interval by restarting from the checkpoint image and
+re-executing the history of debugging commands until the desired point
+in time.</p>
+<p>Since the expression is &quot;good&quot; at the beginning of Figure
+4 and it is &quot;bad&quot; at the end of that figure, there
+must exist a buggy statement : a statement exhibiting the transition
+from &quot;good&quot; to &quot;bad&quot;.  A standard binary search algorithm converges to a
+case in which the current statement is &quot;good&quot; and the next statement
+transitions from &quot;good&quot; to &quot;bad&quot;.  By the earlier definition of a &quot;bug&quot;,
+FReD has found a statement with a bug.  This represents success.</p>
+<p>If implemented naively, this binary search requires that some statements
+may need to be re-executed up to <code>\log_2 N</code> times.  However, FReD
+can also create intermediate checkpoints.  In the worst case, one can
+form a checkpoint at each phase of the binary search.  In that case, no
+particular sub-interval over the time period needs to be executed more
+than twice.</p>
+<div class="section" id="a-typical-use-of-reverse-expression-watchpoint">
+<h4>A typical use of reverse-expression-watchpoint</h4>
+<pre class="code python literal-block">
+<span class="pygments-err">$</span> <span class="pygments-o">./</span><span class="pygments-n">fredapp</span><span class="pygments-o">.</span><span class="pygments-n">py</span> <span class="pygments-n">python</span> <span class="pygments-o">-</span><span class="pygments-n">mpdb</span> <span class="pygments-o">./</span><span class="pygments-n">autocount</span><span class="pygments-o">.</span><span class="pygments-n">py</span>
+<span class="pygments-o">-&gt;</span> <span class="pygments-kn">import</span> <span class="pygments-nn">sys</span><span class="pygments-o">,</span> <span class="pygments-nn">time</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">break</span> <span class="pygments-mi">21</span>
+  <span class="pygments-n">Breakpoint</span> <span class="pygments-mi">1</span> <span class="pygments-n">at</span> <span class="pygments-o">/</span><span class="pygments-n">home</span><span class="pygments-o">/</span><span class="pygments-n">kapil</span><span class="pygments-o">/</span><span class="pygments-n">fred</span><span class="pygments-o">/</span><span class="pygments-n">autocount</span><span class="pygments-o">.</span><span class="pygments-n">py</span><span class="pygments-p">:</span><span class="pygments-mi">21</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">continue</span>
+  <span class="pygments-o">&gt;</span> <span class="pygments-o">/</span><span class="pygments-n">home</span><span class="pygments-o">/</span><span class="pygments-n">kapil</span><span class="pygments-o">/</span><span class="pygments-n">fred</span><span class="pygments-o">/</span><span class="pygments-n">autocount</span><span class="pygments-o">.</span><span class="pygments-n">py</span><span class="pygments-p">(</span><span class="pygments-mi">21</span><span class="pygments-p">)</span><span class="pygments-o">&lt;</span><span class="pygments-n">module</span><span class="pygments-o">&gt;</span><span class="pygments-p">()</span>
+<span class="pygments-c"># Required for fred-reverse-watch</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-n">fred</span><span class="pygments-o">-</span><span class="pygments-n">checkpoint</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">break</span> <span class="pygments-mi">28</span>
+  <span class="pygments-n">Breakpoint</span> <span class="pygments-mi">2</span> <span class="pygments-n">at</span> <span class="pygments-o">/</span><span class="pygments-n">home</span><span class="pygments-o">/</span><span class="pygments-n">kapil</span><span class="pygments-o">/</span><span class="pygments-n">fred</span><span class="pygments-o">/</span><span class="pygments-n">autocount</span><span class="pygments-o">.</span><span class="pygments-n">py</span><span class="pygments-p">:</span><span class="pygments-mi">28</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">continue</span>
+  <span class="pygments-o">...</span>  <span class="pygments-o">&lt;</span><span class="pygments-n">program</span> <span class="pygments-n">output</span><span class="pygments-o">&gt;</span> <span class="pygments-o">...</span>
+  <span class="pygments-o">&gt;</span> <span class="pygments-o">/</span><span class="pygments-n">home</span><span class="pygments-o">/</span><span class="pygments-n">kapil</span><span class="pygments-o">/</span><span class="pygments-n">fred</span><span class="pygments-o">/</span><span class="pygments-n">autocount</span><span class="pygments-o">.</span><span class="pygments-n">py</span><span class="pygments-p">(</span><span class="pygments-mi">28</span><span class="pygments-p">)</span><span class="pygments-o">&lt;</span><span class="pygments-n">module</span><span class="pygments-o">&gt;</span><span class="pygments-p">()</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">print</span> <span class="pygments-n">num</span>
+  <span class="pygments-mi">10</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-n">fred</span><span class="pygments-o">-</span><span class="pygments-n">reverse</span><span class="pygments-o">-</span><span class="pygments-n">watch</span> <span class="pygments-n">num</span> <span class="pygments-o">&lt;</span> <span class="pygments-mi">5</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">print</span> <span class="pygments-n">num</span>
+  <span class="pygments-mi">4</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-nb">next</span>
+<span class="pygments-p">(</span><span class="pygments-n">Pdb</span><span class="pygments-p">)</span> <span class="pygments-k">print</span> <span class="pygments-n">num</span>
+  <span class="pygments-mi">5</span>
+
+</pre>
+</div>
+</div>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion</h2>
+<p>DMTCP is a widely used standalone checkpoint-restart package. We have
+shown that it can be closely integrated with Python. Specifically,
+parallel sessions with IPython, alternating interpreted and compiled
+execution modes, graphics, and enhancing Python debugger with
+reversibility. The implementation can be extended by the end users to
+augment the capabilities of Python beyond the simple example of
+checkpoint-restart.</p>
+</div>
+<div class="section" id="acknowledgment">
+<h2>Acknowledgment</h2>
+<p>This work was partially supported by the National Science Foundation
+under Grant OCI-0960978.</p>
+</div>
+<div class="section" id="references">
+<h2>References</h2>
+<table class="docutils citation" frame="void" id="ansel09" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[Ansel09]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id7">2</a>)</em> Jason Ansel, Kapil Arya, and Gene Cooperman.
+<em>DMTCP: Transparent Checkpointing for Cluster Computations
+and the Desktop</em>,
+23rd IEEE International Symposium on Parallel and Distributed
+Processing (IPDPS-09), 1-12, 2009
+<a class="reference external" href="http://dmtcp.sourceforge.net/">http://dmtcp.sourceforge.net/</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="arya12" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[Arya12]</a></td><td>Kapil Arya, Tyler Denniston, Ana Maria Visan, and Gene
+Cooperman.
+<em>FReD: Automated Debugging via Binary Search through a
+Process Lifetime</em>,
+<a class="reference external" href="http://arxiv.org/abs/1212.5204">http://arxiv.org/abs/1212.5204</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="fred13" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[FReD13]</a></td><td>FReD (Fast Reversible Debugger) Software.
+<a class="reference external" href="https://github.com/fred-dbg/fred">https://github.com/fred-dbg/fred</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="behnel10" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[Behnel10]</a></td><td>R. Bradshaw, S. Behnel, D. S. Seljebotn, G. Ewing, et al.
+<em>Cython: The Best of Both Worlds</em>,
+Computing in Science Engineering, 2010.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="ghoshal11" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[Ghoshal11]</a></td><td>Devarshi Ghoshal, Sreesudhan R. Ramkumar, and
+Arun Chauhan.
+<em>Distributed Speculative Parallelization using Checkpoint
+Restart</em>,
+Procedia Computer Science, 2011.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="rieker06" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id8">[Rieker06]</a></td><td>Michael Rieker, Jason Ansel, and Gene Cooperman.
+<em>Transparent User-Level Checkpointing for the Native POSIX
+Thread Library for Linux</em>,
+Proceeding of PDPTA-06, 492-498, 2006.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="visan11" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id6">[Visan11]</a></td><td>Ana-Maria Visan, Kapil Arya, Gene Cooperman, and Tyler
+Denniston.
+<em>URDB: A Universal Reversible Debugger Based on Decomposing
+Debugging Histories</em>,
+In Proc. of 6th Workshop on Programming Languages and Operating
+Systems (PLOS'2011) (part of Proc. of 23rd ACM SOSP), 2011.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="appendix-background-of-dmtcp">
+<h2>Appendix: Background of DMTCP</h2>
+<div class="figure">
+<img alt="" src="images/dmtcp_dmtcp-arch.png" />
+<p class="caption">Figure 5: Architecture of DMTCP.</p>
+</div>
+<p>DMTCP <a class="citation-reference" href="#ansel09" id="id7">[Ansel09]</a> is a
+transparent checkpoint-restart package with its roots going back eight
+years <a class="citation-reference" href="#rieker06" id="id8">[Rieker06]</a>.  It works completely in user space
+and does not require any changes to the application or the operating
+system.  DMTCP can be used to checkpoint a variety of user applications
+including Python.</p>
+<p>Using DMTCP to checkpoint an application is as simple as executing the
+following commands:</p>
+<pre class="code sh literal-block">
+dmtcp_checkpoint ./a.out
+dmtcp_command -c
+./dmtcp_restart_script.sh
+
+</pre>
+<p>DMTCP automatically tracks all local and remote child processes and
+their relationships.</p>
+<p>As seen in Figure 6, a computation running under DMTCP
+consists of a centralized coordinator process and several user
+processes. The user processes may be local or distributed.  User
+processes may communicate with each other using sockets, shared-memory,
+pseudo-terminals, etc.  Further, each user process has a checkpoint
+thread which communicates with the coordinator.</p>
+<div class="section" id="dmtcp-plugins">
+<h3>DMTCP Plugins</h3>
+<div class="figure">
+<img alt="" src="images/dmtcp_plugin-architecture-simple.png" />
+<p class="caption">Figure 6: DMTCP Plugins.</p>
+</div>
+<p>DMTCP plugins are used to keep DMTCP modular. There is a separate plugin
+for each operating system resource. Examples of plugins are pid plugin,
+socket plugin, and file plugin. Plugins are responsible for
+checkpointing and restoring the state of their corresponding resources.</p>
+<p>The execution environment can change between checkpoint and restart. For
+example, the computation might be restarted on a different computer
+which has different file mount points, a different network address, etc.
+Plugins handle such changes in the execution environment by virtualizing
+these aspects. Figure 6 shows the layout of DMTCP
+plugins within the application.</p>
+</div>
+<div class="section" id="dmtcp-coordinator">
+<h3>DMTCP Coordinator</h3>
+<p>DMTCP uses a stateless centralized process, the DMTCP coordinator, to
+synchronize checkpoint and restart between distributed processes.
+The user interacts with the  coordinator through the console to initiate
+checkpoint, check the status of the computation, kill the computation, etc.
+It is also possible to run the coordinator as a daemon process, in which
+case, the user may communicate with the coordinator using the command
+<tt class="docutils literal">dmtcp_command</tt>.</p>
+</div>
+<div class="section" id="checkpoint-thread">
+<h3>Checkpoint Thread</h3>
+<p>The checkpoint thread waits for a checkpoint request from the DMTCP
+coordinator.  On receiving the checkpoint request, the checkpoint thread
+quiesces the user threads and creates the checkpoint image. To quiesce
+user threads, it installs a signal handler for a dedicated POSIX signal
+(by default, SIGUSR2).
+Once the checkpoint image has been created, the user threads are allowed
+to resume executing application code. Similarly, during restart, once the
+process memory has been restored, the user threads can resume executing
+application code.</p>
+</div>
+<div class="section" id="checkpoint">
+<h3>Checkpoint</h3>
+<p>On receiving the checkpoint request from the coordinator, the checkpoint
+thread sends the checkpoint signal to all the user threads of the
+process.  This quiesces the user threads by forcing them to block inside
+a signal handler, defined by the DMTCP.  The checkpoint image is created
+by writing all of user-space memory to a checkpoint image file. Each
+process has its own checkpoint image.  Prior to checkpoint, each plugin
+will have copied into user-space memory any kernel state associated
+with its concerns.  Examples of such concerns include network sockets,
+files, and pseudo-terminals.  Once the checkpoint image has been
+created, the checkpoint thread &quot;un-quiesces&quot; the user threads and they
+resume executing application code.</p>
+<p>At the time of checkpoint, all of user-space memory is written to a
+checkpoint image file.  The user threads are then allowed to resume
+execution.  Note that user-space memory includes all of the run-time
+libraries (libc, libpthread, etc.), which are also saved in the
+checkpoint image.</p>
+<p>In some cases, state outside the kernel must be saved.  For example, in
+handling network sockets, data in flight must be saved.  This is done by
+draining the network data by sending a <em>special cookie</em> through the
+&quot;send&quot; end of each socket in one phase.  In a second phase, after a
+global barrier, data is read from the &quot;receive&quot; end of each socket until
+the special cookie is received. The in-flight data has now been copied
+into user-space memory, and so will be included in the checkpoint image.
+On restart, the network buffers are <em>refilled</em> by sending the in-flight
+data back to the peer process, which then sends the data back into the
+network.</p>
+</div>
+<div class="section" id="restart">
+<h3>Restart</h3>
+<p>As the first step of restart phase, all memory areas of the process are
+restored. Next, the user threads are recreated. The plugins then receive
+the restart notification and restore their underlying resources,
+translation tables, etc.  Finally, the checkpoint thread &quot;un-quiesces&quot; the
+user threads and the user threads resume executing application code.</p>
+</div>
+</div>
+
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+        </div>
+        <div class="col-lg-3 well well-sm" id="sidebar">
+<aside>
+    <section>
+        <ul class="list-group list-group-flush">
+
+
+
+            <li class="list-group-item"><a href="./tags.html"><h4><i class="icon-tags icon-large"></i>Tags</h4></a></li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/dmtcp.html">
+                        DMTCP
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/data-visualization.html">
+                        data visualization
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/ipython.html">
+                        IPython
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/python.html">
+                        Python
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/exploratory-data-analysis.html">
+                        exploratory data analysis
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/reversible-debugger.html">
+                        reversible debugger
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/cython.html">
+                        Cython
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/checkpoint-restart.html">
+                        checkpoint-restart
+                    </a>
+                </li>
+        </ul>
+    </section>
+</aside>        </div>
+    </div>
+</div>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="./theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="./theme/js/respond.min.js"></script>
+</body>
+</html>
