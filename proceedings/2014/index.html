@@ -49,19 +49,91 @@
 <div class="container">
     <div class="row">
         <div class="col-lg-9">
-            <article>
-                <h4><a href="./dmtcp-bringing-checkpoint-restart-to-python.html">DMTCP: Bringing Checkpoint-Restart to Python</a></h4>
-                <div class="summary">Kapil Arya, Gene Cooperman
+<h2>Provisional proceedings for SciPy2014</h2>
+<p>Presenters of talks and posters at SciPy2014:
+as in previous years, authors of accepted talks and posters are invited to submit a full-length paper (8 pages) expanding on their abstracts for inclusion in the SciPy2014 proceedings.
+</p>
+
+<p>
+The proceedings are aimed at highlighting significant contributions to scientific computing in Python, such as:
+<ul>
+<li>new software packages that support the Scientific Python Stack</li>
+<li>significant improvements to existing software packages</li>
+<li>Descriptions of how to solve hard computational problems with Python</li>
+<li>Hardware systems designed to support the Python stack</li>
+</ul>
+</p>
+
+<hr/>            <article>
+                <div class="entry-content">
+                    <h4><a href="./dmtcp-bringing-checkpoint-restart-to-python.html">DMTCP: Bringing Checkpoint-Restart to Python</a></h4>
+                    <footer class="post-info">
+                        <span class="label label-default">By</span>
+                        <i class="icon-user"></i>Kapil Arya, Gene Cooperman
+
+                            <span class="label label-default">
+                                <a href="#" class="togglesummary">Abstract</a>
+                            </span>
+
+                            &nbsp;
+                            <span class="label label-default">
+                                <a href="./pdf/dmtcp-bringing-checkpoint-restart-to-python.pdf">PDF</a>
+                            </span>
+
+                            &nbsp;
+                            <span class="label label-default">
+                                <a href="./bib/dmtcp-bringing-checkpoint-restart-to-python.bib">BibTex</a>
+                            </span>
+
+
+                    </footer><!-- /.post-info -->
+                    <div class="summary">
+                        <p class="first last">DMTCP (Distributed MultiThreaded CheckPointing) is a mature checkpoint-restart package.  It operates in user-space without kernel privilege, and adapts to application-specific requirements through plugins.  While DMTCP has been able to checkpoint Python and IPython &quot;from  the outside&quot; for many years, a Python module has recently been created to support DMTCP.  IPython support is included through a new DMTCP plugin.  A checkpoint can be requested interactively within a Python session, or under the control of a specific Python program.  Further, the Python program can execute specific Python code prior to checkpoint, upon resuming (within the original process), and upon restarting (from a checkpoint image).  Applications of DMTCP are demonstrated for: (i) Python-based graphics using VNC; (ii) a Fast/Slow technique to use multiple hosts or cores to check one Cython computation in parallel; and (iii) a reversible debugger, FReD, with a novel reverse-expression watchpoint feature for locating the cause of a bug.</p>
+
+                    </div>
                 </div>
             </article>
             <hr/>
             <article>
-                <h4><a href="./multidimensional-data-exploration-with-glue.html">Multidimensional Data Exploration with Glue</a></h4>
-                <div class="summary">Christopher Beaumont, Thomas Robitaille, Alyssa Goodman, Michelle Borkin
+                <div class="entry-content">
+                    <h4><a href="./multidimensional-data-exploration-with-glue.html">Multidimensional Data Exploration with Glue</a></h4>
+                    <footer class="post-info">
+                        <span class="label label-default">By</span>
+                        <i class="icon-user"></i>Christopher Beaumont, Thomas Robitaille, Alyssa Goodman, Michelle Borkin
+
+                            <span class="label label-default">
+                                <a href="#" class="togglesummary">Abstract</a>
+                            </span>
+
+                            &nbsp;
+                            <span class="label label-default">
+                                <a href="./pdf/multidimensional-data-exploration-with-glue.pdf">PDF</a>
+                            </span>
+
+                            &nbsp;
+                            <span class="label label-default">
+                                <a href="./bib/multidimensional-data-exploration-with-glue.bib">BibTex</a>
+                            </span>
+
+
+                    </footer><!-- /.post-info -->
+                    <div class="summary">
+                        <p class="first last">Modern research projects incorporate data from several sources, and new insights are increasingly driven by the ability to interpret data in the context of other data. <a class="reference external" href="http://glueviz.org">Glue</a> is an interactive environment built on top of the standard Python science stack to visualize relationships within and between datasets. With Glue, users can load and visualize multiple related datasets simultaneously. Users specify the logical connections that exist between data, and Glue transparently uses this information as needed to enable visualization across files. This functionality makes it trivial, for example, to interactively overplot catalogs on top of images.  The central philosophy behind Glue is that the structure of research data is highly customized and problem-specific. Glue aims to accommodate this and simplify the &quot;data munging&quot; process, so that researchers can more naturally explore what their data have to say. The result is a cleaner scientific workflow, faster interaction with data, and an easier avenue to insight.</p>
+
+                    </div>
                 </div>
             </article>
             <hr/>
 
+            <hr />
+            <footer> 
+<p>Copyright © 2014. The articles in the Proceedings of the Python in Science Conference are copyrighted and owned by their original authors
+This is an open-access publication and is distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use, distribution, and reproduction in any medium, provided the original author and source are credited.
+For more information, please see: <a href="http://creativecommons.org/licenses/by/3.0/">http://creativecommons.org/licenses/by/3.0</a></p>
+
+<p>powered by <a href="http://github.com/openproceedings/openproceedings-buildbot">OpenProceedings</a> - thanks to <a href="http://figshare.com">FigShare</a> for generous hosting of the proceedings of SciPy 2014.
+ </p>
+            </footer>
         </div>
         <div class="col-lg-3 well well-sm" id="sidebar">
 <aside>
@@ -72,8 +144,28 @@
 
             <li class="list-group-item"><a href="./tags.html"><h4><i class="icon-tags icon-large"></i>Tags</h4></a></li>
                 <li class="list-group-item tag-4">
+                    <a href="./tag/data-visualization.html">
+                        data visualization
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
                     <a href="./tag/python.html">
                         Python
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/reversible-debugger.html">
+                        reversible debugger
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/exploratory-data-analysis.html">
+                        exploratory data analysis
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/cython.html">
+                        Cython
                     </a>
                 </li>
                 <li class="list-group-item tag-4">
@@ -84,26 +176,6 @@
                 <li class="list-group-item tag-4">
                     <a href="./tag/dmtcp.html">
                         DMTCP
-                    </a>
-                </li>
-                <li class="list-group-item tag-4">
-                    <a href="./tag/reversible-debugger.html">
-                        reversible debugger
-                    </a>
-                </li>
-                <li class="list-group-item tag-4">
-                    <a href="./tag/cython.html">
-                        Cython
-                    </a>
-                </li>
-                <li class="list-group-item tag-4">
-                    <a href="./tag/exploratory-data-analysis.html">
-                        exploratory data analysis
-                    </a>
-                </li>
-                <li class="list-group-item tag-4">
-                    <a href="./tag/data-visualization.html">
-                        data visualization
                     </a>
                 </li>
                 <li class="list-group-item tag-4">
@@ -122,5 +194,17 @@
 
 <!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
 <script src="./theme/js/respond.min.js"></script>
+
+
+<script>
+$('.togglesummary').on('click', function(e) {
+    e.preventDefault();
+    var $this = $(this);
+    var $collapse = $this.closest('article').find('.summary');
+    $collapse.collapse('toggle');
+});
+$('.summary').collapse('hide');
+</script>
+
 </body>
 </html>
