@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:og="http://ogp.me/ns#"
+      xmlns:fb="https://www.facebook.com/2008/fbml">
+<head>
+    <title>Total Recall: flmake and the Quest for Reproducibility</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="./theme/css/bootstrap.min.css" type="text/css"/>
+    <link href="./theme/css/font-awesome.min.css" rel="stylesheet">
+    <link href="./theme/css/bootstrap-glyphicons.css" rel="stylesheet">
+    <link href="./theme/css/pygments.css" rel="stylesheet">
+    <link rel="stylesheet" href="./theme/css/style.css" type="text/css"/>
+    <!-- JavaScript plugins (requires jQuery) -->
+    <script src="http://code.jquery.com/jquery.js"></script>
+
+
+</head>
+<body>
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="https://conference.scipy.org/scipy2014/"><img src="./theme/images/scipy2014_logo_simple_200px.png" class="pull-left" style="margin-right:20px"/></a>
+            <a href="." class="navbar-brand">Scipy 2014 proceedings</a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+<!--
+            <ul class="nav navbar-nav navbar-right">
+                <li><a href="./archives.html"><i class="icon-th-list"></i>Archives</a></li>
+            </ul>
+--!>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</nav>
+<!-- /.navbar -->
+<div class="container">
+    <div class="row">
+        <div class="col-lg-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="./total-recall-flmake-and-the-quest-for-reproducibility.html"
+                       rel="bookmark"
+                       title="Permalink to Total Recall: flmake and the Quest for Reproducibility">
+                        Total Recall: flmake and the Quest for Reproducibility
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">By</span>
+    <i class="icon-user"></i>Anthony Scopatz
+
+
+        <span class="label label-default">
+            <a href="./pdf/total-recall-flmake-and-the-quest-for-reproducibility.pdf">PDF</a>
+        </span>
+
+        &nbsp;
+        <span class="label label-default">
+            <a href="./bib/total-recall-flmake-and-the-quest-for-reproducibility.bib">BibTex</a>
+        </span>
+
+
+&nbsp;
+<span class="label label-default">Tags</span>
+	<a href="./tag/flash.html">FLASH</a>
+        /
+	<a href="./tag/reproducibility.html">reproducibility</a>
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <div class="section" id="introduction">
+<h2>Introduction</h2>
+<p>FLASH is a high-performance computing (HPC) multi-physics code which is used to perform
+astrophysical and high-energy density physics simulations <a class="citation-reference" href="#flash" id="id1">[FLASH]</a>.  It runs on the full
+range of systems from laptops to workstations to 100,000 processor super computers, such
+as the Blue Gene/P at Argonne National Laboratory.</p>
+<p>Historically, FLASH was born from a collection of unconnected legacy codes written
+primarily in Fortran and merged into a single project.  Over the past 13 years major
+sections have been rewritten in other languages.  For instance, I/O is now implemented
+in C.  However building, testing, and documentation are all performed in Python.</p>
+<p>FLASH has a unique architecture which compiles <em>simulation specific</em> executables for each
+new type of run.  This is aided by an object-oriented-esque inheritance model that is
+implemented by inspecting the file system directory tree.  This allows FLASH to
+compile to faster machine code than a compile-once strategy.  However it also
+places a greater importance on the Python build system.</p>
+<p>To run a FLASH simulation, the user must go through three basic steps: setup, build, and
+execution.  Canonically, each of these tasks are independently handled by the user.
+However with the recent advent of flmake - a Python workflow management utility for
+FLASH - such tasks may now be performed in a repeatable way <a class="citation-reference" href="#flmake" id="id2">[FLMAKE]</a>.</p>
+<p>Previous workflow management tools have been written for FLASH.  (For example, the
+&quot;Milad system&quot; was implemented entirely in Makefiles.)  However, none of the prior
+attempts have placed reproducibility as their primary concern.  This is in part because
+fully capturing the setup metadata required alterations to the build system.</p>
+<p>The development of flmake started by rewriting the existing build system
+to allow FLASH to be run outside of the mainline subversion repository.  It separates out
+a project (or simulation) directory independent of the FLASH source directory.  This
+directory is typically under its own version control.</p>
+<p>For each of the important tasks (setup, build, run, etc), a sidecar metadata
+<em>description</em> file is either initialized or modified.  This is a simple
+dictionary-of-dictionaries JSON file which stores the environment of the
+system and the state of the code when each flmake command is run.  This metadata includes
+the version information of both the FLASH mainline and project repositories.
+However, it also may include all local modifications since the last commit.
+A patch is automatically generated using standard posix utilities and stored directly
+in the description.</p>
+<p>Along with universally unique identifiers, logging, and Python run control files, the
+flmake utility may use the description files to fully reproduce a simulation by
+re-executing each command in its original state.  While <tt class="docutils literal">flmake reproduce</tt>
+makes a useful debugging tool, it fundamentally increases the scientific merit of
+FLASH simulations.</p>
+<p>The methods described herein may be used whenever
+source code itself is distributed.   While this is true for FLASH (uncommon amongst compiled
+codes), most Python packages also distribute their source.  Therefore the same
+reproducibility strategy is applicable and highly recommended for Python simulation codes.
+Thus flmake shows that reproducibility - which is notably absent from most computational science
+projects - is easily attainable using only version control, Python standard library modules,
+and ever-present command line utilities.</p>
+</div>
+<div class="section" id="new-workflow-features">
+<h2>New Workflow Features</h2>
+<p>As with many predictive science codes, managing FLASH simulations may be a tedious
+task for both new and experienced users.  The flmake command line utility eases the
+simulation burden and shortens the development cycle by providing a modular tool
+which implements many common elements of a FLASH workflow.  At each stage
+this tool captures necessary metadata about the task which it is performing.  Thus
+flmake encapsulates the following operations:</p>
+<ul class="simple">
+<li>setup/configuration,</li>
+<li>building,</li>
+<li>execution,</li>
+<li>logging,</li>
+<li>analysis &amp; post-processing,</li>
+<li>and others.</li>
+</ul>
+<p>It is highly recommended that both novice and advanced users adopt flmake as it
+<em>enables</em> reproducible research while simultaneously making FLASH easier to use.
+This is accomplished by a few key abstractions from previous mechanisms used to set up,
+build, and execute FLASH.  The implementation of these abstractions are
+critical flmake features and are discussed below.  Namely they are the separation
+of project directories, a searchable source path, logging, dynamic run control, and
+persisted metadata descriptions.</p>
+<div class="section" id="independent-project-directories">
+<h3>Independent Project Directories</h3>
+<p>Without flmake, FLASH must be setup and built from within the FLASH source directory
+(<tt class="docutils literal">FLASH_SRC_DIR</tt>) using the setup script and make <a class="citation-reference" href="#gmake" id="id3">[GMAKE]</a>.  While this is sufficient
+for single runs, such a strategy fails to separate projects and simulation campaigns from
+the source code. Moreover, keeping simulations next to the source makes it difficult to
+track local modifications independent of the mainline code development.</p>
+<p>Because of these difficulties in running suites of simulations from within <tt class="docutils literal">FLASH_SRC_DIR</tt>,
+flmake is intended to be run external to the FLASH source directory.  This is known as the
+project directory.  The project directory should be managed by its own version control
+systems.  By doing so, all of the project-specific files are encapsulated in a repository
+whose history is independent from the main FLASH source.   Here this directory is called
+<tt class="docutils literal">proj/</tt> though in practice it takes the name of the simulation campaign.   This
+directory may be located anywhere on the user's file system.</p>
+</div>
+<div class="section" id="source-project-paths-searching">
+<h3>Source &amp; Project Paths Searching</h3>
+<p>After creating a project directory, the simulation source files must be assembled using
+the flmake setup command.  This is analogous to executing the traditional setup script.
+For example, to run the classic Sedov problem:</p>
+<pre class="code sh literal-block">
+~/proj <span class="pygments-nv">$ </span>flmake setup Sedov -auto
+<span class="pygments-o">[</span>snip<span class="pygments-o">]</span>
+SUCCESS
+~/proj <span class="pygments-nv">$ </span>ls
+flash_desc.json  setup/
+
+</pre>
+<p>This command creates symbolic links to the the FLASH source files in the <tt class="docutils literal">setup/</tt> directory.
+Using the normal FLASH setup script, all of these files must live within
+<tt class="docutils literal"><span class="pre">${FLASH_SRC_DIR}/source/</span></tt>.  However, the flmake setup command searches additional paths to
+find potential source files.</p>
+<p>By default if there is a local <tt class="docutils literal">source/</tt> directory in the project directory then this
+is searched first for any potential FLASH units.  The structure of this directory mirrors
+the layout found in <tt class="docutils literal"><span class="pre">${FLASH_SRC_DIR}/source/</span></tt>.  Thus if the user wanted to write a new or
+override an existing driver unit, they could place all of the relevant files in
+<tt class="docutils literal">~/proj/source/Driver/</tt>.  Units found in the project source directory take precedence over
+units with the same name in the FLASH source directory.</p>
+<p>The most commonly overridden units, however, are simulations. Yet specific simulations
+live somewhat deep in the file system hierarchy as they reside within
+<tt class="docutils literal">source/Simulation/SimulationMain/</tt>.  To make accessing
+simulations easier a local project <tt class="docutils literal">simulations/</tt> directory is first searched for any possible
+simulations.  Thus <tt class="docutils literal">simulations/</tt> effectively aliases <tt class="docutils literal">source/Simulation/SimulationMain/</tt>.
+Continuing with the previous Sedov example the following directories are
+searched in order of precedence for simulation units, if they exist:</p>
+<ol class="arabic">
+<li><p class="first"><tt class="docutils literal">~/proj/simulations/Sedov/</tt></p>
+</li>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal">~/proj/source/Simulation/</tt></dt>
+<dd><p class="first last"><tt class="docutils literal">SimulationMain/Sedov/</tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><tt class="docutils literal"><span class="pre">${FLASH_SRC_DIR}/source/</span></tt></dt>
+<dd><p class="first last"><tt class="docutils literal">Simulation/SimulationMain/Sedov/</tt></p>
+</dd>
+</dl>
+</li>
+</ol>
+<p>Therefore, it is common for a project directory to have the following structure if the
+project requires many modifications to FLASH that are - at least in the short term -
+inappropriate for mainline inclusion:</p>
+<pre class="code sh literal-block">
+~/proj <span class="pygments-nv">$ </span>ls
+flash_desc.json  setup/  simulations/  <span class="pygments-nb">source</span>/
+
+</pre>
+</div>
+<div class="section" id="logging">
+<h3>Logging</h3>
+<p>In many ways computational simulation is more akin to experimental science than
+theoretical science.  Simulations are executed to test the system at hand in analogy
+to how physical experiments probe the natural world.  Therefore, it is useful for
+computational scientists to adopt the time-tested strategy of a keeping a lab notebook
+or its electronic analogy.</p>
+<p>Various example of virtual lab notebooks exist <a class="citation-reference" href="#vlabnb" id="id4">[VLABNB]</a> as a way of storing
+information about how an experiment was conducted.  The resultant data is often
+stored in conjunction with the notebook.  Arguably the corollary concept in
+software development is logging.  Unfortunately, most simulation
+science makes use of neither lab notebooks nor logging.  Rather than using an
+external rich- or web-client, flmake makes use of the built-in Python logger.</p>
+<p>Every flmake command has the ability to log a message.  This follows
+the <tt class="docutils literal"><span class="pre">-m</span></tt> convention from version control systems.  These messages and associated
+metadata are stored in a <tt class="docutils literal">flash.log</tt> file in the project directory.</p>
+<p>Not every command uses logging; for trivial commands which do not change state
+(such as listing or diffing) log entries are not needed.  However for more serious commands
+(such as building) logging is a critical component.  Understanding that many users cannot
+be bothered to create meaningful log messages at each step, sensible and default messages
+are automatically generated.  Still, it is highly recommended that the user provide
+more detailed messages as needed.  <em>E.g.</em>:</p>
+<pre class="code sh literal-block">
+~/proj <span class="pygments-nv">$ </span>flmake -m <span class="pygments-s2">&quot;Run with 600 J laser&quot;</span> run -n 10
+
+</pre>
+<p>The <tt class="docutils literal">flmake log</tt> command may then be used to display past log
+messages:</p>
+<pre class="code sh literal-block">
+~/proj <span class="pygments-nv">$ </span>flmake log -n 1
+Run id: b2907415
+Run dir: run-b2907415
+Command: run
+User: scopatz
+Date: Mon Mar 26 14:20:46 2012
+Log id: 6b9e1a0f-cfdc-418f-8c50-87f66a63ca82
+
+    Run with 600 J laser
+
+</pre>
+<p>The <tt class="docutils literal">flash.log</tt> file should be added to the version control of the project.  Entries
+in this file are not typically deleted.</p>
+</div>
+<div class="section" id="dynamic-run-control">
+<h3>Dynamic Run Control</h3>
+<p>Many aspects of FLASH are declared in a static way.  Such declarations happen mainly
+at setup and runtime.  For certain build and run operations several parameters may
+need to be altered in a consistent way to actually have the desired effect.  Such
+repetition can become tedious and usually leads to less readable inputs.</p>
+<p>To make the user input more concise and expressive, flmake introduces a run control
+<tt class="docutils literal">flashrc.py</tt> file in the project directory.  This is a Python module which is
+executed, if it exists, in an empty namespace whenever flmake is called.  The
+flmake commands may then choose to access specific data in this file.  Please refer
+to individual command documentation for an explanation on if/how the run control
+file is used.</p>
+<p>The most important example of using <tt class="docutils literal">flashrc.py</tt> is that the run and restart
+commands will update the <tt class="docutils literal">flash.par</tt> file with values from a <tt class="docutils literal">parameters</tt>
+dictionary (or function which returns a dictionary).</p>
+<p>Initial <tt class="docutils literal">flash.par</tt></p>
+<pre class="code sh literal-block">
+<span class="pygments-nv">order</span> <span class="pygments-o">=</span> 3
+<span class="pygments-nv">slopeLimiter</span> <span class="pygments-o">=</span> <span class="pygments-s2">&quot;minmod&quot;</span>
+<span class="pygments-nv">charLimiting</span> <span class="pygments-o">=</span> .true.
+<span class="pygments-nv">RiemannSolver</span> <span class="pygments-o">=</span> <span class="pygments-s2">&quot;hll&quot;</span>
+
+</pre>
+<p>Run Control <tt class="docutils literal">flashrc.py</tt></p>
+<pre class="code python literal-block">
+<span class="pygments-n">parameters</span> <span class="pygments-o">=</span> <span class="pygments-p">{</span><span class="pygments-s">&quot;slopeLimiter&quot;</span><span class="pygments-p">:</span> <span class="pygments-s">&quot;mc&quot;</span><span class="pygments-p">,</span>
+              <span class="pygments-s">&quot;use_flattening&quot;</span><span class="pygments-p">:</span> <span class="pygments-bp">False</span><span class="pygments-p">}</span>
+
+</pre>
+<p>Final <tt class="docutils literal">flash.par</tt></p>
+<pre class="code sh literal-block">
+<span class="pygments-nv">RiemannSolver</span> <span class="pygments-o">=</span> <span class="pygments-s2">&quot;hll&quot;</span>
+<span class="pygments-nv">charLimiting</span> <span class="pygments-o">=</span> .true.
+<span class="pygments-nv">order</span> <span class="pygments-o">=</span> 3
+<span class="pygments-nv">slopeLimiter</span> <span class="pygments-o">=</span> <span class="pygments-s2">&quot;mc&quot;</span>
+<span class="pygments-nv">use_flattening</span> <span class="pygments-o">=</span> .false.
+
+</pre>
+</div>
+<div class="section" id="description-sidecar-files">
+<h3>Description Sidecar Files</h3>
+<p>As a final step, the setup command generates a <tt class="docutils literal">flash_desc.json</tt> file in the
+project directory.  This is the description file
+for the FLASH simulation which is currently being worked on.  This description
+is a sidecar file whose purpose is to store the following metadata at execution
+of each flmake command:</p>
+<ul class="simple">
+<li>the environment,</li>
+<li>the version of both project and FLASH source repository,</li>
+<li>local source code modifications (diffs),</li>
+<li>the run control files (see above),</li>
+<li>run ids and history,</li>
+<li>and FLASH binary modification times.</li>
+</ul>
+<p>Thus the description file is meant to be a full picture of the way FLASH
+code was generated, compiled, and executed.  Total reproducibility of a FLASH
+simulation is based on having a well-formed description file.</p>
+<p>The contents of this file are essentially a persisted dictionary which contains
+the information listed above.  The top level keys include setup, build, run,
+and merge.  Each of these keys gets added when the corresponding flmake command is
+called.  Note that restart alters the run value and does not generate its own
+top-level key.</p>
+<p>During setup and build, <tt class="docutils literal">flash_desc.json</tt> is modified in the project directory.
+However, each run receives a copy of this file in the run directory with the run
+information added.  Restarts and merges inherit from the file in the previous run
+directory.</p>
+<p>These sidecar files enable the flmake reproduce command which is capable of
+recreating a FLASH simulation from only
+the <tt class="docutils literal">flash_desc.json</tt> file and the associated source and project repositories.
+This is useful for testing and verification of the same simulation across multiple
+different machines and platforms.
+It is generally not recommended that users place this file under version control
+as it may change often and significantly.</p>
+</div>
+<div class="section" id="example-workflow">
+<h3>Example Workflow</h3>
+<p>The fundamental flmake abstractions have now been explained
+above.  A  typical flmake workflow which sets up,
+builds, runs, restarts, and merges a fork of a Sedov simulation is
+now demonstrated. First, construct the project repository:</p>
+<pre class="code sh literal-block">
+~ <span class="pygments-nv">$ </span>mkdir my_sedov
+~ <span class="pygments-nv">$ </span><span class="pygments-nb">cd </span>my_sedov/
+~/my_sedov <span class="pygments-nv">$ </span>mkdir simulations/
+~/my_sedov <span class="pygments-nv">$ </span>cp -r <span class="pygments-k">${</span><span class="pygments-nv">FLASH_SRC_DIR</span><span class="pygments-k">}</span>/source/<span class="pygments-se">\
+</span>             Simulation/SimulationMain/Sedov
+             simulations/
+~/my_sedov <span class="pygments-nv">$ </span><span class="pygments-c"># edit the simulation
+</span>~/my_sedov <span class="pygments-nv">$ </span>nano simulations/Sedov/<span class="pygments-se">\
+</span>             Simulation_init.F90
+~/my_sedov <span class="pygments-nv">$ </span>git init .
+~/my_sedov <span class="pygments-nv">$ </span>git add .
+~/my_sedov <span class="pygments-nv">$ </span>git commit -m <span class="pygments-s2">&quot;My Sedov project&quot;</span>
+
+</pre>
+<p>Next, create and run the simulation:</p>
+<pre class="code sh literal-block">
+~/my_sedov <span class="pygments-nv">$ </span>flmake setup -auto Sedov
+~/my_sedov <span class="pygments-nv">$ </span>flmake build -j 20
+~/my_sedov <span class="pygments-nv">$ </span>flmake -m <span class="pygments-s2">&quot;First run of my Sedov&quot;</span> <span class="pygments-se">\
+</span>                                       run -n 10
+~/my_sedov <span class="pygments-nv">$ </span>flmake -m <span class="pygments-s2">&quot;Oops, it died.&quot;</span> restart <span class="pygments-se">\
+</span>                             run-5a4f619e/ -n 10
+~/my_sedov <span class="pygments-nv">$ </span>flmake -m <span class="pygments-s2">&quot;Merging my first run.&quot;</span> <span class="pygments-se">\
+</span>                    merge run-fc6c9029 first_run
+~/my_sedov <span class="pygments-nv">$ </span>flmake clean 1
+
+</pre>
+</div>
+</div>
+<div class="section" id="why-reproducibility-is-important">
+<h2>Why Reproducibility is Important</h2>
+<p>True to its part of speech, much of `scientific computing' has the trappings of
+science in that it is code produced to solve problems in (big-`S') Science.
+However, the process by which said programs are written is not typically
+itself subject to the rigors of the scientific method.  The vaulted method contains
+components of prediction, experimentation, duplication, analysis, and openness
+<a class="citation-reference" href="#godfrey-smith" id="id5">[GODFREY-SMITH]</a>.  While software engineers often engage in such activities when
+programming, scientific developers usually forgo these methods, often to their
+detriment <a class="citation-reference" href="#wilson" id="id6">[WILSON]</a>.</p>
+<p>Whatever the reason for this may be - ignorance, sloth, or other deadly sins -
+the impetus for adopting modern software development practices only increases
+every year.  The evolution of tools such as version control and environment
+capturing mechanisms (such as virtual machines/hypervisors) enable researchers to
+more easily retain information about software during and after production.
+Furthermore, the apparent end of Silicon-based Moore's Law has necessitated a move
+to more exotic architectures and increased parallelism to see further speed
+increases <a class="citation-reference" href="#mims" id="id7">[MIMS]</a>. This implies that code that runs on machines now may not
+be able to run on future processors without significant refactoring.</p>
+<p>Therefore the scientific computing landscape is such that there are presently the
+tools and the need to have fully reproducible simulations.  However, most scientists
+choose to not utilize these technologies.  This is akin to a chemist not keeping a
+lab notebook.  The lack of reproducibility means that many solutions to science
+problems garnered through computational means are relegated to the realm of technical
+achievements.  Irreproducible results may be novel and interesting but they are not
+science.  Unlike the current paradigm of
+computing-about-science, or
+<em>periscientific computing</em>,
+reproducibility is a keystone of
+<em>diacomputational science</em> (computing-throughout-science).</p>
+<p>In periscientific computing there may exist a partition between expert software
+developers and expert scientists, each of whom must learn to partially speak the
+language of the other camp.   Alternatively, when expert software engineers are not available,
+canonically ill-equipped scientists perform only the bare minimum development to
+solve computing problems.</p>
+<p>On the other hand, in diacomputational science, software exists as a substrate on top of
+which science and engineering problems are solved.  Whether theoretical, simulation,
+or experimental problems are at hand the scientist has a working knowledge of
+computing tools available and an understanding of how to use them responsibly.
+While the level of education required for
+diacomputational science may seem extreme in a constantly changing software ecosystem,
+this is in fact no greater than what is currently
+expect from scientists with regard to Statistics <a class="citation-reference" href="#wilson" id="id8">[WILSON]</a>.</p>
+<p>With the extreme cases illustrated above, there are some notable exceptions.  The first
+is that there are researchers who are cognizant and respectful of these reproducibility
+issues.  The efforts of these scientists help paint a less dire picture than the
+one framed here.</p>
+<p>The second exception is that while reproducibility is a key feature of fundamental science
+it is not the only one.  For example, openness is another point whereby the statement
+&quot;If a result is not produced openly then it is not science&quot; holds.  Open access to
+results - itself is a hotly contested issue <a class="citation-reference" href="#vrieze" id="id9">[VRIEZE]</a> - is certainly a component of
+computational science.  Though having open and available code
+is likely critical for pure science, it often lies outside the scope of normal research
+practice.  This is for a variety of reasons, including the fear that releasing code too
+early or at all will negatively impact personal publication records.  Tackling the
+openness issue must be left for another paper.</p>
+<p>In summary, reproducibility is important because without it any results generated are
+periscientific.  To achieve diacomputational science there exist computational tools to aid
+in this endeavor, as in analogue science there are physical solutions.  Though it
+is not the only criticism to be levied against modern research practices, irreproducibility
+is one that affects computation acutely and uniquely as compared to other spheres.</p>
+</div>
+<div class="section" id="the-reproduce-command">
+<h2>The Reproduce Command</h2>
+<p>The <tt class="docutils literal">flmake reproduce</tt> command is the key feature enabling the total reproducibility
+of a FLASH simulation.  This takes a description file (e.g. <tt class="docutils literal">flash_desc.json</tt>) and implicitly
+the FLASH source and project repositories and replays the setup, build, and run commands
+originally executed.  It has the following usage string:</p>
+<pre class="code sh literal-block">
+flmake reproduce <span class="pygments-o">[</span>options<span class="pygments-o">]</span> &lt;flash_descr&gt;
+
+</pre>
+<p>For each command, reproduction works by cloning both source and project repositories at a
+the point in history when they were run into temporary directories.  Then any local
+modifications which were present (and not under version control) are loaded from the
+description file and applied to the cloned repository.  It then copies the original run control
+file to the cloned repositories and performs any command-specific modifications needed.  Finally,
+it executes the appropriate command <em>from the cloned repository</em> using the original
+arguments provided on the command line.  The following figure presents a flow sheet
+of this process.</p>
+<div class="bht figure align-center">
+<img alt="" src="images/reproduce_flowchart.png" />
+<p class="caption">The reproduce command workflow.</p>
+</div>
+<p>Thus the <tt class="docutils literal">flmake reproduce</tt> recreates the
+original simulation using the original commands (and not the versions currently present).
+The reproduce command has the following limitations:</p>
+<ol class="arabic simple">
+<li>Source directory must be version controlled,</li>
+<li>Project directory must be version controlled,</li>
+<li>The FLASH run must depend on only the runtime parameters file, the FLASH executable and
+FLASH datafiles,</li>
+<li>and the FLASH executable must not be modified between build and run steps.</li>
+</ol>
+<p>The above restrictions enforce that the run is not considered
+reproducible if at any point FLASH depends on externalities or alterations
+not tracked by version control.  Critical to this process
+are version control abstractions and the capability to execute historical
+commands. These will be discussed in the following subsections.</p>
+<div class="section" id="meta-version-control">
+<h3>Meta-Version Control</h3>
+<p>Every user and developer tends towards one version control system or
+another.  The mainline FLASH development team operates in subversion
+<a class="citation-reference" href="#svn" id="id10">[SVN]</a> though individual developers may prefer git <a class="citation-reference" href="#git" id="id11">[GIT]</a> or mercurial
+<a class="citation-reference" href="#hg" id="id12">[HG]</a>.  As mentioned previously, some users do not employ any source
+control management software.</p>
+<p>In the case where the user lacks a sophisticated
+version control system, it is still possible to obtain reproducibility <em>if</em> a
+clean directory tree of a recent release is available. This clean tree must
+be stored in a known place, typically the <tt class="docutils literal">.clean/</tt> subdirectory of the
+<tt class="docutils literal">FLASH_SRC_DIR</tt>.  This is known as the `release' versioning system and
+is managed entirely by flmake.</p>
+<p>To realize reproducibility in this environment, it is necessary for the
+reproduce command to abstract core source control management features
+away from the underlying technology (or absence of technology).
+For flmake, the following
+operations define version control in the context of reproducibility:</p>
+<ul class="simple">
+<li>info,</li>
+<li>checkout or clone,</li>
+<li>diff,</li>
+<li>and patch.</li>
+</ul>
+<p>The info operation provides version control information that points to the
+current state of the repository.  For all source control management schemes
+this includes a unique string id for the versioning type (e.g. `svn' for
+subversion).  In centralized version control this contains the repository
+version number, while for for distributed systems info will return the branch
+name and the hash of the current HEAD.  In the release system,
+info simply returns the release version number.  The info data that is found
+is then stored in the description file for later use.</p>
+<p>The checkout (or sometimes clone) operation is effectively the inverse operation
+to info.  This operation takes a point in history, as described by the data
+garnered from info, and makes a temporary copy of the whole repository at this
+point.  Thus no matter what evolution the code has undergone since the description
+file was written, checkout rolls back the source to its previous incarnation.
+For centralized version control this operation copies the existing tree, reverts it
+to a clean working tree of HEAD, and performs a reverse merge on all commits from
+HEAD to the historical target.  For distributed systems this clones the current
+repository, checkouts or updates to the historical position, and does a hard reset
+to clean extraneous files.  The release system is easiest in that checkout
+simply copies over the clean subdirectory.  This operation is performed for
+the setup, build, and run commands at reproduce time.</p>
+<p>The diff operation may seem less than fundamental to version control. Here however,
+diff is used to capture local modifications to the working trees of the source and
+project directories.  This diffing is in place as a fail-safe against uncommitted
+changes.  For centralized and distributed systems, diffing is performed through
+the selfsame command name.  In the release system (where committing is impossible),
+diffing takes on the heavy lifting not provided by a more advanced system.  Thus for the
+release system diff is
+performed via the posix <tt class="docutils literal">diff</tt> tool with the recursive switch between the
+<tt class="docutils literal">FLASH_SRC_DIR</tt> and the clean copy.  The diff operation is executed when the
+commands are originally run.  The resultant diff string is stored in the
+description file, along with the corresponding info.</p>
+<p>The inverse operation to diff is patch.  This is used at reproduce time
+after checkout to restore the working trees of the temporary repositories to the
+same state they were in at the original execution of setup, build, and run.
+While each source control management system has its own patching mechanism, the
+output of diff always returns a string which is compatible with the posix <tt class="docutils literal">patch</tt>
+utility.  Therefore, for all systems  the <tt class="docutils literal">patch</tt> program
+is used.</p>
+<p>The above illustrates how version control abstraction may be used to define a set
+of meta-operations which capture all versioning information provided.  This even
+included the case where no formal version control system was used.  It also
+covers the case of the `forgetful' user who may not have committed every relevant
+local change to the repository prior to running a simulation.  What is more
+is that the flmake implementation of these abstractions is only a handful of
+functions.  These total less than 225 lines of code in Python.  Though small,
+this capability is vital to the reproduce command functioning as intended.</p>
+</div>
+<div class="section" id="command-time-machine">
+<h3>Command Time Machine</h3>
+<p>Another principal feature of flmake reproducibility is its ability to execute
+historical versions of the key commands (setup, build, and run) as reincarnated
+by the meta-version control.  This is akin to the bootstrapping problem whereby
+all of the instruction needed to reproduce a command are contained in the original
+information provided.  Without this capability, the most current versions of the
+flmake commands would be acting on historical versions of the repository.  While such
+a situation would be a large leap forward for the reproducibility of FLASH simulations, it
+falls well short of total reproducibility.  In practice, therefore, historical flmake
+commands acting on historical source are needed.  This maybe be termed the `command
+time machine,' though it only travels into the past.</p>
+<p>The implementation of the command time machine requires the highly dynamic nature
+of Python, a bit of namespace slight-of-hand, and relative imports.  First note that
+module and package which are executing the flmake reproduce command may not be
+deleted from the <tt class="docutils literal">sys.modules</tt> cache.  (Such a removal would cause
+sudden and terrifying runtime failures.)  This effectively means that everything under the
+<tt class="docutils literal">flash</tt> package name may not be modified.</p>
+<p>Nominally, the historical version of the package would be under the <tt class="docutils literal">flash</tt>
+namespace as well.  However, the name <tt class="docutils literal">flash</tt> is only given at install time.
+Inside of the source directory, the package is located in <tt class="docutils literal">tools/python/</tt>.
+This allows the current reproduce command to add the checked out and patched
+<tt class="docutils literal"><span class="pre">{temp-flash-src-dir}/tools/</span></tt> directory to the front of <tt class="docutils literal">sys.path</tt> for setup,
+build, and run.  Then the historical flmake may
+be imported via <tt class="docutils literal">python.flmake</tt> because <tt class="docutils literal">python/</tt> is a subdirectory
+of <tt class="docutils literal"><span class="pre">{temp-flash-src-dir}/tools/</span></tt>.</p>
+<p>Modules inside of <tt class="docutils literal">python</tt> or <tt class="docutils literal">flmake</tt> are guaranteed to import other
+modules in their own package because of the exclusive use of relative imports.
+This ensures that the old commands import old commands rather then mistakenly
+importing newer iterations.</p>
+<p>Once the historical command is obtained, it is executed with the original
+arguments from the description file. After execution, the temporary source
+directory <tt class="docutils literal"><span class="pre">{temp-flash-src-dir}/tools/</span></tt> is removed from <tt class="docutils literal">sys.path</tt>.
+Furthermore, any module whose name starts with <tt class="docutils literal">python</tt> is also deleted
+from <tt class="docutils literal">sys.modules</tt>.  This cleans the environment for the next historical
+command to be run in its own temporal context.</p>
+<p>In effect, the current version of flmake
+is located in the <tt class="docutils literal">flmake</tt> namespace and should remain untouched while
+the reproduce command is running.  Simultaneously, the historic flmake
+commands are given the namespace <tt class="docutils literal">python</tt>.   The time value of <tt class="docutils literal">python</tt>
+changes with each command reproduced but is fully independent from the
+current flmake code.  This method of renaming a package namespace on the file
+system allows for one version of flmake to supervise the execution of another
+in a manner relevant to reproducibility.</p>
+</div>
+</div>
+<div class="section" id="a-note-on-replication">
+<h2>A Note on Replication</h2>
+<p>A weaker form of reproducibility is known as
+<em>replication</em> <a class="citation-reference" href="#schmidt" id="id13">[SCHMIDT]</a>.  Replication is the process of recreating a result
+when &quot;you take all the same data and all the same tools&quot; <a class="citation-reference" href="#graham" id="id14">[GRAHAM]</a> which were
+used in the original determination.  Replication is a weaker determination than
+reproduction because at minimum the original scientist should be able to replicate
+their own work.  Without replication, the same code executed twice will produce
+distinct results.  In this case no trust may be placed in the conclusions
+whatsoever.</p>
+<p>Much as version control has given developers greater control over reproducibility,
+other modern tools are powerful instruments of replicability.  Foremost among
+these are hypervisors.  The ease-of-use and ubiquity of virtual machines (VM) in
+the software ecosystem allows for the total capture and persistence of the environment
+in which any computation was performed.  Such environments may be hosted and shared
+with collaborators, editors, reviewers, or the public at large.  If the original
+analysis was performed in a VM context, shared, and rerun by other scientists then this
+is replicability.  Such a strategy has been proposed by C. T. Brown as a stop-gap
+measure until diacomputational science is realized <a class="citation-reference" href="#brown" id="id15">[BROWN]</a>.</p>
+<p>However, as Brown admits (see comments), the delineation between replication and
+reproduction is fuzzy.  Consider these questions which have no clear answers:</p>
+<ul class="simple">
+<li>Are bit-identical results needed for replication?</li>
+<li>How much of the environment must be reinstated for replication
+versus reproduction?</li>
+<li>How much of the hardware and software stack must be recreated?</li>
+<li>What precisely is meant by `the environment' and how large is it?</li>
+<li>For codes depending on stochastic processes, is reusing the same
+random seed replication or reproduction?</li>
+</ul>
+<p>Without justifiable answers to the above, ad hoc definitions have
+governed the use of replicability and reproducibility.
+Yet to the quantitatively minded, an I-know-reproducibility-when-I-see-it
+approach falls short.  Thus the science of science, at least in the
+computational sphere, has much work remaining.</p>
+<p>Even with the reproduction/replication dilemma, the flmake reproduce
+command <em>is</em> a reproducibility tool.  This is because it takes the
+opposite approach to Brown's VM-based replication.  Though the environment
+is captured within the description file, flmake reproduce does not attempt
+to recreate this original environment at all.  The previous environment
+information is simply there for posterity, helping to uncover any
+discrepancies which may arise.  User specific settings on the reproducing
+machine are maintained.  This includes but is not limited to which compiler
+is used.</p>
+<p>The claim that Brown's work and flmake reproduce represent paragons of
+replicability and reproducibility respectively may be easily challenged.  The author,
+like Brown himself, does not presuppose to have all - or even partially
+satisfactory - answers.  What is presented here is an attempt
+to frame the discussion and bound the option space of possible meanings for these terms.
+Doing so with concrete code examples is preferable to debating
+this issue in the abstract.</p>
+</div>
+<div class="section" id="conclusions-future-work">
+<h2>Conclusions &amp; Future Work</h2>
+<p>By capturing source code and the environment at key stages - setup, build,
+and run - FLASH simulations may be fully reproduced in the future.   Doing
+so required a wrapper utility called flmake.  The writing of this tool
+involved an overhaul of the existing system.  Though portions of flmake
+took inspiration from previous systems none were as comprehensive.
+Additionally, to the author's knowledge, no previous system included
+a mechanism to non-destructively execute previous command incarnations
+similar to flmake reproduce.</p>
+<p>The creation of flmake itself was done as an exercise in reproducibility.
+What has been shown here is that it is indeed possible to increase the
+merit of simulation science through a relatively small, though thoughtful, amount
+of code.  It is highly encouraged that the methods described here be
+copied by other software-in-science project <a class="footnote-reference" href="#id17" id="id16">[*]</a>.</p>
+<p>Moreover, in the process of determining what flmake <em>should</em> be, several
+fundamental questions about reproducibility itself were raised.  These
+point to systemic issues within the realm of computational science.
+With the increasing importance of computing, soon science as a whole
+will also be forced to reconcile these reproducibility concerns.
+Unfortunately, there does not appear to be an obvious and present solution
+to the problems posed.</p>
+<p>As with any software development project, there are further improvements
+and expansions that will continue to be added to flmake.
+More broadly, the questions posed by reproducibility will
+be the subject of future work on this project and others.  Additional
+issues (such as openness) will also
+figure into subsequent attempts to bring about a global state of
+diacomputational science.</p>
+</div>
+<div class="section" id="acknowledgements">
+<h2>Acknowledgements</h2>
+<p>Dr. Milad Fatenejad provided a superb sounding board in the conception of the flmake utility
+and aided in outlining the constraints of reproducibility.</p>
+<p>The software used in this work was in part developed by the DOE NNSA-ASC OASCR Flash Center
+at the University of Chicago.</p>
+</div>
+<div class="section" id="references">
+<h2>References</h2>
+<table class="docutils citation" frame="void" id="brown" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id15">[BROWN]</a></td><td>C. Titus Brown, &quot;Our approach to replication in computational science,&quot;
+Living in an Ivory Basement, April 2012,
+<a class="reference external" href="http://ivory.idyll.org/blog/replication-i.html">http://ivory.idyll.org/blog/replication-i.html</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="flash" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[FLASH]</a></td><td>FLASH Center for Computational Science, <em>FLASH User's Guide, Version 4.0-beta,</em>
+<a class="reference external" href="http://flash.uchicago.edu/site/flashcode/user_support/flash4b_ug.pdf">http://flash.uchicago.edu/site/flashcode/user_support/flash4b_ug.pdf</a>,
+University of Chicago, February 2012.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="flmake" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[FLMAKE]</a></td><td>A. Scopatz, <em>flmake: the flash workflow utility,</em>
+<a class="reference external" href="http://flash.uchicago.edu/site/flashcode/user_support/tools4b/usersguide/flmake/index.html">http://flash.uchicago.edu/site/flashcode/user_support/tools4b/usersguide/flmake/index.html</a>,
+The University of Chicago, June 2012.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="git" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id11">[GIT]</a></td><td>Scott Chacon, &quot;Pro Git,&quot; Apress (2009) DOI: 10.1007/978-1-4302-1834-0</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="gmake" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[GMAKE]</a></td><td>Free Software Foundation, The GNU Make Manual for version 3.82,
+<a class="reference external" href="http://www.gnu.org/software/make/">http://www.gnu.org/software/make/</a>, 2010.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="godfrey-smith" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id5">[GODFREY-SMITH]</a></td><td>Godfrey-Smith, Peter (2003), <em>Theory and Reality: An introduction to
+the philosophy of science</em>, University of Chicago Press, ISBN 0-226-30063-3.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="graham" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id14">[GRAHAM]</a></td><td>Jim Graham, &quot;What is `Reproducibility,' Anyway?&quot;, Scimatic, April 2010,
+<a class="reference external" href="http://www.scimatic.com/node/361">http://www.scimatic.com/node/361</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="hg" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id12">[HG]</a></td><td>Bryan O'Sullivan, &quot;Mercurial: The Definitive Guide,&quot; O'Reilly Media, Inc., 2009.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="mims" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id7">[MIMS]</a></td><td>C. Mims, <em>Moore's Law Over, Supercomputing &quot;In Triage,&quot; Says Expert,</em>
+<a class="reference external" href="http://www.technologyreview.com/view/427891/moores-law-over-supercomputing-in-triage-says/">http://www.technologyreview.com/view/427891/moores-law-over-supercomputing-in-triage-says/</a>
+May 2012, Technology Review, MIT.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="schmidt" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id13">[SCHMIDT]</a></td><td>Gavin A. Schmidt, &quot;On replication,&quot; RealClimate, Feb 2009,
+<a class="reference external" href="http://www.realclimate.org/index.php/archives/2009/02/on-replication/langswitch_lang/in/">http://www.realclimate.org/index.php/archives/2009/02/on-replication/langswitch_lang/in/</a>.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="svn" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id10">[SVN]</a></td><td>Ben Collins-Sussman, Brian W. Fitzpatrick, C. Michael Pilato (2011).
+&quot;Version Control with Subversion: For Subversion 1.7&quot;. O'Reilly.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="vlabnb" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[VLABNB]</a></td><td>Rubacha, M.; Rattan, A. K.; Hosselet, S. C. (2011). <em>A Review of Electronic
+Laboratory Notebooks Available in the Market Today</em>. Journal of Laboratory
+Automation 16 (1): 90–98. DOI:10.1016/j.jala.2009.01.002. PMID 21609689.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="vrieze" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id9">[VRIEZE]</a></td><td>Jop de Vrieze, <em>Thousands of Scientists Vow to Boycott Elsevier to Protest Journal
+Prices,</em> Science Insider, February 2012.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="wilson" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[WILSON]</td><td><em>(<a class="fn-backref" href="#id6">1</a>, <a class="fn-backref" href="#id8">2</a>)</em> G.V. Wilson, <em>Where's the real bottleneck in scientific computing?</em> Am Sci.
+2005;94:5.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id17" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id16">[*]</a></td><td>Please contact the author if you require aid in any reproducibility endeavours.</td></tr>
+</tbody>
+</table>
+</div>
+
+            </div>
+            <!-- /.entry-content -->
+        </article>
+    </section>
+
+            <hr />
+            <footer> 
+<p>Copyright © 2014. The articles in the Proceedings of the Python in Science Conference are copyrighted and owned by their original authors
+This is an open-access publication and is distributed under the terms of the Creative Commons Attribution License, which permits unrestricted use, distribution, and reproduction in any medium, provided the original author and source are credited.
+For more information, please see: <a href="http://creativecommons.org/licenses/by/3.0/">http://creativecommons.org/licenses/by/3.0</a></p>
+
+<p>powered by <a href="http://github.com/openproceedings/openproceedings-buildbot">OpenProceedings</a> - thanks to <a href="http://figshare.com">FigShare</a> for generous hosting of the proceedings of SciPy 2014.
+ </p>
+            </footer>
+        </div>
+        <div class="col-lg-3 well well-sm" id="sidebar">
+<aside>
+    <section>
+        <ul class="list-group list-group-flush">
+
+
+
+            <li class="list-group-item"><a href="./tags.html"><h4><i class="icon-tags icon-large"></i>Tags</h4></a></li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/flash.html">
+                        FLASH
+                    </a>
+                </li>
+                <li class="list-group-item tag-4">
+                    <a href="./tag/reproducibility.html">
+                        reproducibility
+                    </a>
+                </li>
+        </ul>
+    </section>
+</aside>        </div>
+    </div>
+</div>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="./theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="./theme/js/respond.min.js"></script>
+
+</body>
+</html>
